@@ -1,17 +1,25 @@
 /**
  * Local-filesystem fallback used when Supabase is not configured.
- * Files are saved to <project-root>/local-uploads/<path>.
- * Version records are tracked in <project-root>/local-uploads/versions.json.
+ * On serverless platforms (Vercel), uses os.tmpdir() to prevent EROFS read-only errors.
  */
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
-const BASE = path.join(process.cwd(), 'local-uploads');
+const isServerless = process.env.VERCEL === '1' || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+const BASE = isServerless
+  ? path.join(os.tmpdir(), 'local-uploads')
+  : path.join(process.cwd(), 'local-uploads');
+
 const VERSIONS_FILE = path.join(BASE, 'versions.json');
 
 function ensureDir(dir: string) {
-  fs.mkdirSync(dir, { recursive: true });
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch (err) {
+    console.error('Failed to create directory:', dir, err);
+  }
 }
 
 export function localUpload(storagePath: string, bytes: Uint8Array): void {
@@ -33,6 +41,7 @@ export interface VersionRecord {
 
 function readVersions(): VersionRecord[] {
   try {
+    if (!fs.existsSync(VERSIONS_FILE)) return [];
     return JSON.parse(fs.readFileSync(VERSIONS_FILE, 'utf-8'));
   } catch {
     return [];
@@ -41,7 +50,11 @@ function readVersions(): VersionRecord[] {
 
 function writeVersions(records: VersionRecord[]) {
   ensureDir(BASE);
-  fs.writeFileSync(VERSIONS_FILE, JSON.stringify(records, null, 2));
+  try {
+    fs.writeFileSync(VERSIONS_FILE, JSON.stringify(records, null, 2));
+  } catch (err) {
+    console.error('Failed to write local versions file:', err);
+  }
 }
 
 export function localInsertVersion(record: Omit<VersionRecord, 'id'>): VersionRecord {
