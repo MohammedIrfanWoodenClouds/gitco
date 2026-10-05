@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GITCO Plant Hire &amp; Sales — Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B0D10">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0D10;--surface:#15181D;--surface-2:#1C2127;--surface-3:#222831;--border:#272D35;
+  --orange:#F7941D;--orange-deep:#C9701A;--orange-dim:#3A2A16;
+  --text:#EDEFF2;--text-dim:#8A93A1;--text-faint:#5B6472;
+  --green:#2FAE6B;--green-dim:#16301F;--red:#E5484D;--red-dim:#34191B;--blue:#3D8BFF;--blue-dim:#152238;
+  --amber:#E8B33C;
+  --radius:14px;--radius-sm:8px;
+  --font-body:'Inter';--font-display:'Oswald';
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font-body),-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,h4,.display{font-family:var(--font-display),Impact,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.03em;}
+.app{display:flex;min-height:100vh;}
+.sidebar{width:224px;flex-shrink:0;background:linear-gradient(180deg,#0E1014,#0B0D10 60%);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 20px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.brand .gear{width:38px;height:38px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#3a3f46,#15171b 75%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 1px var(--orange-deep) inset;}
+.brand .gear svg{width:20px;height:20px;stroke:var(--orange);fill:none;stroke-width:1.7;}
+.brand .name{font-family:var(--font-display),sans-serif;font-size:14.5px;letter-spacing:.05em;line-height:1.2;}
+.brand .name span{color:var(--orange);}
+.brand .tag{font-size:8.5px;color:var(--text-faint);letter-spacing:.16em;text-transform:uppercase;margin-top:3px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--radius-sm);color:var(--text-dim);cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.02em;border:1px solid transparent;margin-bottom:4px;transition:background .15s,color .15s;user-select:none;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.8;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nav-item:hover{background:var(--surface);color:var(--text);}
+.nav-item.active{background:var(--orange-dim);color:var(--orange);border-color:#54380F;}
+.nav-section-label{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);padding:14px 12px 6px;font-weight:700;}
+.side-foot{margin-top:auto;padding:14px 10px 4px;border-top:1px solid var(--border);font-size:10.5px;color:var(--text-faint);line-height:1.6;}
+.main{flex:1;min-width:0;padding:26px 30px 60px;}
+.global-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+.global-bar h1{margin:0;font-size:26px;}
+.global-bar .sub{color:var(--text-dim);font-size:13px;margin-top:4px;font-family:var(--font-body);text-transform:none;letter-spacing:0;font-weight:400;}
+.right-meta{text-align:right;font-size:11.5px;color:var(--text-faint);}
+select.month-select{background:var(--orange-dim);color:var(--orange);border:1px solid #54380F;border-radius:10px;font-family:var(--font-display);letter-spacing:.05em;font-size:14px;padding:8px 12px;cursor:pointer;outline:none;margin-bottom:6px;}
+.section-title{font-size:17px;margin:26px 0 4px;}
+.section-sub{color:var(--text-dim);font-size:12.5px;margin:0 0 12px;}
+.formula-note{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;font-size:11.8px;color:var(--text-dim);margin-bottom:14px;line-height:1.55;}
+.formula-note b{color:var(--orange);font-weight:700;}
+.banner{border-radius:var(--radius-sm);padding:13px 16px;font-size:13px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;line-height:1.5;}
+.banner.loss{background:var(--red-dim);border:1px solid #5A2225;color:#F4C7C9;}
+.banner.gain{background:var(--green-dim);border:1px solid #1F4A30;color:#BFE8CF;}
+.banner b{color:#fff;}
+.banner svg{width:17px;height:17px;flex-shrink:0;margin-top:1px;stroke:currentColor;fill:none;stroke-width:2;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px 13px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--text-faint));}
+.kpi .label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);font-weight:700;margin-bottom:8px;}
+.kpi .value{font-family:var(--font-display);font-size:24px;line-height:1.05;}
+.kpi .value.neg{color:var(--red);}
+.kpi .value.pos{color:var(--text);}
+.kpi .d{font-size:10.5px;color:var(--text-faint);margin-top:7px;}
+.grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;align-items:start;}
+.grid-2-even{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+@media(max-width:1000px){.grid-2,.grid-2-even{grid-template-columns:1fr;}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.panel h3{margin:0 0 3px;font-size:14px;}
+.panel .psub{color:var(--text-dim);font-size:11.5px;margin:0 0 14px;}
+.chart-wrap{position:relative;height:250px;}
+.chart-wrap.tall{height:300px;}
+.data-table{width:100%;border-collapse:collapse;font-size:12.3px;}
+.data-table th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-weight:700;white-space:nowrap;}
+.data-table td{padding:8px 10px;border-bottom:1px solid #1E232A;color:var(--text-dim);vertical-align:top;}
+.data-table td.strong{color:var(--text);font-weight:600;}
+.data-table td.num,.data-table th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr.total-row td{border-top:2px solid var(--border);color:var(--text);font-weight:700;background:var(--surface-2);}
+.pill{display:inline-block;padding:2.5px 9px;border-radius:999px;font-size:10.3px;font-weight:700;letter-spacing:.04em;}
+.pill.paid{background:var(--green-dim);color:var(--green);}
+.pill.unpaid{background:var(--red-dim);color:var(--red);}
+.pill.partial{background:#3A2F14;color:var(--amber);}
+.pill.pending{background:var(--blue-dim);color:var(--blue);}
+.pill.low{background:var(--red-dim);color:var(--red);}
+.pill.ok{background:var(--green-dim);color:var(--green);}
+.pill.out{background:#2A2E35;color:var(--text-faint);}
+.scroll-x{overflow-x:auto;}
+.bar-track{height:8px;background:var(--surface-3);border-radius:99px;overflow:hidden;margin-top:8px;}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--orange-deep),var(--orange));border-radius:99px;}
+.mini-stats{display:flex;gap:22px;flex-wrap:wrap;margin:6px 0 14px;}
+.mini-stats .ms .v{font-family:var(--font-display);font-size:21px;}
+.mini-stats .ms .l{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);font-weight:700;margin-top:2px;}
+.tab-page{display:none;}
+.tab-page.active{display:block;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+@media(prefers-reduced-motion:reduce){.tab-page.active{animation:none;}}
+.mt0{margin-top:0;}
+.footnote{font-size:10.5px;color:var(--text-faint);margin-top:10px;line-height:1.55;}
+@media(max-width:820px){.sidebar{position:fixed;z-index:40;transform:translateX(-100%);transition:transform .2s;}.sidebar.open{transform:none;}.main{padding:18px 14px 60px;}.menu-btn{display:inline-flex!important;}}
+.menu-btn{display:none;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;cursor:pointer;font-size:13px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="gear"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+      <div>
+        <div class="name">GITCO <span>PLANT HIRE</span><br>&amp; SALES</div>
+        <div class="tag">Performance Dashboard 2026</div>
+      </div>
+    </div>
+    <div class="nav-section-label">Modules</div>
+    <div class="nav-item active" data-tab="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Overview</div>
+    <div class="nav-item" data-tab="sales"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>Sales Module</div>
+    <div class="nav-item" data-tab="products"><svg viewBox="0 0 24 24"><path d="M20 7L12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4"/><path d="M12 11v10"/></svg>Product Sales · Stock · Profit</div>
+    <div class="nav-item" data-tab="inventory"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M8 8V5a1 1 0 011-1h6a1 1 0 011 1v3"/><path d="M3 13h18"/></svg>Inventory Module</div>
+    <div class="nav-item" data-tab="calibration"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Calibration Certificates</div>
+    <div class="nav-section-label">Data sources</div>
+    <div class="side-foot">Day Book 2026 (Jan–Jun sheets)<br>Outrigger Pads Inventory<br>Goal-2026 targets · Due-2025 receivables<br><br>All amounts in QAR.</div>
+  </aside>
+  <main class="main">
+    <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Menu</button>
+    <div class="global-bar">
+      <div>
+        <h1>GITCO Plant Hire &amp; Sales</h1>
+        <div class="sub" id="page-sub">Sales, inventory &amp; calibration performance dashboard</div>
+      </div>
+      <div class="right-meta">
+        <select class="month-select" id="month-select"></select>
+        <div id="meta-line"></div>
+      </div>
+    </div>
+
+    <!-- ================= OVERVIEW ================= -->
+    <div class="tab-page active" id="tab-overview">
+      <h2 class="section-title mt0">Overview</h2>
+      <p class="section-sub" id="ov-sub"></p>
+      <div class="formula-note">Gross Profit = <b>sum of the Profit column</b> in the month's Day Book sheet (Invoice Value − Expenses − Workshop Cost) · Net Profit = <b>Gross Profit − Overheads</b>. This matches the workbook's own Net Profit cells (e.g. June's sheet states net profit of QAR 170.96, which is exactly Gross Profit − Overheads for June). Headline totals are taken from each sheet's own "Totals:" row.</div>
+      <div id="ov-banner"></div>
+      <div class="kpi-grid" id="ov-kpis"></div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Monthly Sales — Revenue vs Profit</h3>
+          <p class="psub">Gross revenue, gross profit and net profit by month (Jan–Jun 2026)</p>
+          <div class="chart-wrap tall"><canvas id="chart-monthly"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Overheads — <span id="oh-month"></span></h3>
+          <p class="psub" id="oh-sub"></p>
+          <div class="scroll-x"><table class="data-table" id="oh-table"></table></div>
+        </div>
+      </div>
+      <div class="grid-2-even" style="margin-top:14px;">
+        <div class="panel">
+          <h3>Net Profit Trend</h3>
+          <p class="psub">Net profit after overheads, by month</p>
+          <div class="chart-wrap"><canvas id="chart-net"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Revenue Mix — <span id="mix-month"></span></h3>
+          <p class="psub">Invoice value by product / service group</p>
+          <div class="chart-wrap"><canvas id="chart-mix"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SALES ================= -->
+    <div class="tab-page" id="tab-sales">
+      <h2 class="section-title mt0">Sales Module</h2>
+      <p class="section-sub" id="sales-sub"></p>
+      <div class="kpi-grid" id="sales-kpis"></div>
+      <div class="panel" style="margin-bottom:14px;">
+        <h3>Monthly Sales Indicator</h3>
+        <p class="psub">Invoice value per month with 6-month average line</p>
+        <div class="chart-wrap"><canvas id="chart-sales-monthly"></canvas></div>
+      </div>
+      <div class="panel" style="margin-bottom:14px;">
+        <h3>Sales Register — <span id="sales-month"></span></h3>
+        <p class="psub">Every invoice recorded in the month's Day Book sheet</p>
+        <div class="scroll-x"><table class="data-table" id="sales-table"></table></div>
+      </div>
+      <div id="due-banner"></div>
+      <div class="panel">
+        <h3>2025 Outstanding — Receivables Carried From 2025</h3>
+        <p class="psub">Unpaid invoices from the Due-2025 sheet — total QAR 66,600 invoiced until December 2025, all owed by M/S Oriental Trading Company</p>
+        <div class="scroll-x"><table class="data-table" id="due-table"></table></div>
+      </div>
+    </div>
+
+    <!-- ================= PRODUCTS ================= -->
+    <div class="tab-page" id="tab-products">
+      <h2 class="section-title mt0">Product-Wise Sales · Stock · Profit</h2>
+      <p class="section-sub">From the "Product sales details" sheet — lifetime purchased, sold, current stock and realised profit per product line.</p>
+      <div class="kpi-grid" id="prod-kpis"></div>
+      <div class="grid-2-even" style="margin-bottom:14px;">
+        <div class="panel">
+          <h3>Profit by Product (Top 10)</h3>
+          <p class="psub">Realised profit per product line, QAR</p>
+          <div class="chart-wrap tall"><canvas id="chart-prod-profit"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Sold vs In Stock by Category</h3>
+          <p class="psub">Units sold and units still in stock, grouped by category</p>
+          <div class="chart-wrap tall"><canvas id="chart-cat"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Product Master Table</h3>
+        <p class="psub">Sales, stock and profit for every product</p>
+        <div class="scroll-x"><table class="data-table" id="prod-table"></table></div>
+      </div>
+    </div>
+
+    <!-- ================= INVENTORY ================= -->
+    <div class="tab-page" id="tab-inventory">
+      <h2 class="section-title mt0">Inventory Module</h2>
+      <p class="section-sub">Current stock position, reorder alerts and incoming purchase orders.</p>
+      <div class="kpi-grid" id="inv-kpis"></div>
+      <div id="inv-banner"></div>
+      <div class="panel" style="margin-bottom:14px;">
+        <h3>Stock Position</h3>
+        <p class="psub">Current stock vs EOQ — items at or below EOQ are flagged for reorder</p>
+        <div class="scroll-x"><table class="data-table" id="inv-table"></table></div>
+      </div>
+      <div class="panel">
+        <h3>New Orders In Transit</h3>
+        <p class="psub">From the "New Order Status" sheet — 7 order lines, all shipped 22 Jul 2026, ETA 22 Aug 2026</p>
+        <div class="scroll-x"><table class="data-table" id="order-table"></table></div>
+      </div>
+    </div>
+
+    <!-- ================= CALIBRATION ================= -->
+    <div class="tab-page" id="tab-calibration">
+      <h2 class="section-title mt0">Calibration Certificate Module</h2>
+      <p class="section-sub">Certificates issued vs the 2026 target of 210, plus calibration &amp; certification revenue from the Day Book.</p>
+      <div class="kpi-grid" id="cal-kpis"></div>
+      <div class="panel" style="margin-bottom:14px;">
+        <h3>Annual Target Progress</h3>
+        <p class="psub" id="cal-prog-sub"></p>
+        <div class="bar-track"><div class="bar-fill" id="cal-bar"></div></div>
+        <div class="footnote">Per the Goal-2026 sheet: only 210 certificates are due to expire by 31 December, and the monthly target varies with the number of certificates expiring each month.</div>
+      </div>
+      <div class="grid-2-even" style="margin-bottom:14px;">
+        <div class="panel">
+          <h3>Certificates Issued Per Month</h3>
+          <p class="psub">Official counts from the Goal-2026 sheet</p>
+          <div class="chart-wrap"><canvas id="chart-certs"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Calibration Revenue &amp; Profit</h3>
+          <p class="psub">Calibration / certification invoices in the Day Book, by month</p>
+          <div class="chart-wrap"><canvas id="chart-cal-rev"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Calibration Jobs — <span id="cal-month"></span></h3>
+        <p class="psub">Calibration, recalibration, TPC, load test &amp; certification invoices for the selected month</p>
+        <div class="scroll-x"><table class="data-table" id="cal-table"></table></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const DATA = {"months": {"Jan": {"transactions": [{"date": "2026-01-01", "client": "Global Sources", "product": "Outrigger Pad (500x500x50)", "qty": 1, "landing": 119.54, "unit": 0, "invoice": 320, "expenses": 119.54, "workshop": 0, "profit": 200.45999999999998, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-01", "client": "Al Anees", "product": "SLI System (BT)", "qty": 1, "landing": 13265.73, "unit": 0, "invoice": 21500, "expenses": 250, "workshop": 2000, "profit": 5984.27, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-01", "client": "Qcon Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 750, "expenses": 250, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-03", "client": "GITCO Trd", "product": "Wolfbox G900Pro", "qty": 1, "landing": 736.55, "unit": 0, "invoice": 800, "expenses": 0, "workshop": 0, "profit": 63.450000000000045, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-04", "client": "Al Ansari", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-07", "client": "OTC", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 900, "expenses": 250, "workshop": 250, "profit": 400, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-01-07", "client": "Dayim Equipment", "product": "PLI System (FL)", "qty": 1, "landing": 4208.46, "unit": 0, "invoice": 10000, "expenses": 0, "workshop": 1000, "profit": 4791.54, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-07", "client": "Medgulf", "product": "SLI System (BT)", "qty": 1, "landing": 13265.73, "unit": 0, "invoice": 21500, "expenses": 250, "workshop": 2000, "profit": 5984.27, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-10", "client": "Ottawa", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-17", "client": "Aditya", "product": "Wolfbox G900Pro", "qty": 1, "landing": 736.55, "unit": 0, "invoice": 1100, "expenses": 0, "workshop": 200, "profit": 163.45000000000005, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-19", "client": "Al Anees", "product": "Outrigger Pad (500x500x50)", "qty": 2, "landing": 119.54, "unit": 0, "invoice": 640, "expenses": 239.08, "workshop": 0, "profit": 400.91999999999996, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-19", "client": "NBK", "product": "Outrigger Pad (1200X1200X80)", "qty": 5, "landing": 903.45, "unit": 1400, "invoice": 7000, "expenses": 4517.25, "workshop": 0, "profit": 2482.75, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-19", "client": "NBK", "product": "Outrigger Pad (1000x1000x60)", "qty": 5, "landing": 540.28, "unit": 950, "invoice": 4750, "expenses": 2701.3999999999996, "workshop": 0, "profit": 2048.6000000000004, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-21", "client": "Qcon Engg", "product": "4 Camera System", "qty": 1, "landing": 547.1, "unit": 0, "invoice": 1300, "expenses": 0, "workshop": 200, "profit": 552.9, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-22", "client": "Danem Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-27", "client": "Al Anees", "product": "Outrigger Pad (1000x1000x60)", "qty": 5, "landing": 540.28, "unit": 950, "invoice": 4750, "expenses": 2701.3999999999996, "workshop": 0, "profit": 2048.6000000000004, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-27", "client": "Al Buraq", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-27", "client": "Descon", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-01-28", "client": "National Cranes", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-01-31", "client": "Jaidah", "product": "SLI System (BT)", "qty": 1, "landing": 13265.73, "unit": 0, "invoice": 21000, "expenses": 250, "workshop": 2000, "profit": 5484.27, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-01-31", "client": "Enova Trading", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}], "gross": {"invoice": 103310, "expenses": 13278.67, "workshop": 9650, "profit": 34355.479999999996}, "overheads": [{"label": "Rental", "amount": 5700}, {"label": "Salary", "amount": 5000}, {"label": "Miscellaneous Expenses", "amount": 120}, {"label": "Vehicle Expenses", "amount": 471.38}, {"label": "Telephone", "amount": 70}], "net_profit": 22994.1}, "Feb": {"transactions": [{"date": "2026-02-01", "client": "Esnad Transport", "product": "Outrigger Pad (500x500x50)", "qty": 8, "landing": 106.71, "unit": 325, "invoice": 2600, "expenses": 853.68, "workshop": 0, "profit": 1746.3200000000002, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-01", "client": "Al Anis", "product": "SLI System (BT)", "qty": 1, "landing": 13265.73, "unit": 0, "invoice": 21500, "expenses": 250, "workshop": 2000, "profit": 5984.27, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-02", "client": "Dime Heavy Equipment", "product": "SLI System (BT)", "qty": 1, "landing": 13265.73, "unit": 0, "invoice": 22000, "expenses": 250, "workshop": 2000, "profit": 6484.27, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-03", "client": "Jaidah Motors", "product": "SLI System (BT)", "qty": 1, "landing": 13265.73, "unit": 0, "invoice": 21000, "expenses": 250, "workshop": 2000, "profit": 5484.27, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-04", "client": "Ottawa Construction", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-04", "client": "Qcon Engg", "product": "Wolfbox G900Pro", "qty": 1, "landing": 736.55, "unit": 0, "invoice": 1300, "expenses": 736.55, "workshop": 0, "profit": 563.45, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-04", "client": "Khaled Projects", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-05", "client": "OTC", "product": "CRD Cable", "qty": 20, "landing": 13.62, "unit": 21, "invoice": 420, "expenses": 272.4, "workshop": 50, "profit": 97.60000000000002, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-05", "client": "Silverline", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-05", "client": "Auto Xpert", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-08", "client": "National Cranes", "product": "CRD Cable", "qty": "5m", "landing": 13.62, "unit": 21, "invoice": 105, "expenses": 68.1, "workshop": 25, "profit": 11.900000000000006, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-08", "client": "Mighty Trading", "product": "Outrigger Pad (500x500x50)", "qty": 2, "landing": 106.71, "unit": 325, "invoice": 650, "expenses": 213.42, "workshop": 0, "profit": 436.58000000000004, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-09", "client": "Carmal Group", "product": "Spark Arestor Installation", "qty": 2, "landing": 0, "unit": 850, "invoice": 1700, "expenses": 600, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-12", "client": "Global Sources", "product": "Recalibration", "qty": 2, "landing": 0, "unit": 0, "invoice": 2000, "expenses": 500, "workshop": 500, "profit": 1000, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-14", "client": "Integrated Logistics", "product": "High Lift Proxy Switch", "qty": 1, "landing": 393.76, "unit": 0, "invoice": 2200, "expenses": 393.76, "workshop": 350, "profit": 1456.24, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-14", "client": "Qcon Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 750, "expenses": 250, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-15", "client": "Mannai", "product": "SLI System (BT)", "qty": 2, "landing": 25815.36, "unit": 22500, "invoice": 45000, "expenses": 2500, "workshop": 4000, "profit": 12684.64, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-16", "client": "Hamad Bin Khalid (HPE)", "product": "Outrigger Pad (1200x1200x60)", "qty": 25, "landing": 756.74, "unit": 1150, "invoice": 28750, "expenses": 18918.5, "workshop": 0, "profit": 9831.5, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-16", "client": "Milaha Navigation", "product": "Anemometer", "qty": 1, "landing": 3203.27, "unit": 0, "invoice": 5000, "expenses": 140, "workshop": 200, "profit": 1456.73, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-16", "client": "OTC", "product": "A2B Switch", "qty": 1, "landing": 0, "unit": 0, "invoice": 600, "expenses": 0, "workshop": 25, "profit": 575, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-17", "client": "Jaidah Motors", "product": "SLI System (BT)", "qty": 1, "landing": 13265.73, "unit": 0, "invoice": 21000, "expenses": 250, "workshop": 2000, "profit": 5484.27, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-17", "client": "OTC", "product": "A2B Switch", "qty": 1, "landing": 0, "unit": 0, "invoice": 600, "expenses": 0, "workshop": 25, "profit": 575, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "1900-02-18", "client": "Global Sources", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-02-18", "client": "Seashore Hydraulics", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-02-18", "client": "Galfar Al Misnad Engg", "product": "A400 Board Repair Charge", "qty": 1, "landing": 1980, "unit": 0, "invoice": 2675, "expenses": 0, "workshop": 50, "profit": 645, "inv_status": "Sent", "pay_status": "Unpaid"}], "gross": {"invoice": 185850, "expenses": 27092.73, "workshop": 15225, "profit": 58017.04000000001}, "overheads": [{"label": "Rental", "amount": 5700}, {"label": "Visa Expenses", "amount": 1220}, {"label": "Miscellaneous", "amount": 500}, {"label": "Salary", "amount": 16125}, {"label": "Fuel", "amount": 913.75}, {"label": "Vehicle Maintenanace", "amount": 905}, {"label": "Telephone", "amount": 70}], "net_profit": 32583.290000000008}, "Mar": {"transactions": [{"date": "2026-03-01", "client": "Inco Group", "product": "Nylon Pulley", "qty": 2, "landing": 0, "unit": 160, "invoice": 320, "expenses": 220, "workshop": 0, "profit": 100, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-02", "client": "Khaled Projects", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-03", "client": "Esnad Transport", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 900, "expenses": 250, "workshop": 250, "profit": 400, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-04", "client": "Enova Contracting", "product": "Wire Rope (10mm)", "qty": 100, "landing": 272, "unit": 10, "invoice": 1000, "expenses": 100, "workshop": 0, "profit": 628, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-05", "client": "Jaidah", "product": "SLI System (BT)", "qty": 1, "landing": 13249.57, "unit": 0, "invoice": 21000, "expenses": 250, "workshop": 2000, "profit": 5500.43, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-06", "client": "Esnad Transport", "product": "Wire Rope (12mm)", "qty": 130, "landing": 690.3, "unit": 13, "invoice": 1690, "expenses": 100, "workshop": 0, "profit": 899.7, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-07", "client": "Najco", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-08", "client": "National Cranes", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-09", "client": "Khaled Projects", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-10", "client": "Esnad Transport", "product": "SLI System (BT)", "qty": 1, "landing": 13249.57, "unit": 0, "invoice": 21500, "expenses": 250, "workshop": 2000, "profit": 6000.43, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-11", "client": "Esnad Transport", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 900, "expenses": 250, "workshop": 250, "profit": 400, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-12", "client": "Golden Rocks", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1500, "expenses": 250, "workshop": 500, "profit": 750, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-15", "client": "Safe World Transport", "product": "A2B Warning Device", "qty": 1, "landing": 286.79, "unit": 0, "invoice": 1600, "expenses": 0, "workshop": 200, "profit": 1113.21, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-18", "client": "Qcon Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 750, "expenses": 250, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-18", "client": "OTC", "product": "CRD Cable", "qty": 15, "landing": 13.62, "unit": 21, "invoice": 315, "expenses": 204.29999999999998, "workshop": 25, "profit": 72.08000000000001, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-22", "client": "Auto Xpert", "product": "CRD Repair and Calibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 800, "expenses": 0, "workshop": 400, "profit": 400, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-24", "client": "Subin c/o Amal", "product": "Wolfbox G900pro", "qty": 1, "landing": 736.55, "unit": 1000, "invoice": 1000, "expenses": 736.55, "workshop": 200, "profit": 63.450000000000045, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-24", "client": "Gulf Asia Contracting", "product": "Recalibration", "qty": 3, "landing": 0, "unit": 0, "invoice": 3000, "expenses": 750, "workshop": 750, "profit": 1500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-28", "client": "Roots Energy", "product": "Recalibration and repair", "qty": 1, "landing": 0, "unit": 0, "invoice": 1800, "expenses": 250, "workshop": 650, "profit": 900, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-29", "client": "Golden Rocks", "product": "CRD Repair and Cable", "qty": 18, "landing": 13.62, "unit": 21, "invoice": 1130, "expenses": 245.16, "workshop": 400, "profit": 484.84000000000003, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-29", "client": "GITCO", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-29", "client": "Gulf Energy", "product": "SLI System (BT)", "qty": 1, "landing": 13249.57, "unit": 0, "invoice": 22000, "expenses": 250, "workshop": 2000, "profit": 6500.43, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-29", "client": "Esnad Transport", "product": "Recalibration and A2B Switch", "qty": 1, "landing": 0, "unit": 0, "invoice": 1550, "expenses": 250, "workshop": 275, "profit": 1025, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-30", "client": "Esnad Transport", "product": "Outrigger Pads (500x500x50)", "qty": 4, "landing": 106.71, "unit": 325, "invoice": 1300, "expenses": 426.84, "workshop": 0, "profit": 873.1600000000001, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-03-31", "client": "Safa Trading", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-03-31", "client": "Jaidah", "product": "SLI System (BT)", "qty": 1, "landing": 13249.57, "unit": 0, "invoice": 21000, "expenses": 250, "workshop": 2000, "profit": 5500.43, "inv_status": "Sent", "pay_status": "Unpaid"}], "gross": {"invoice": 111055, "expenses": 6562.85, "workshop": 13650, "profit": 36361.16}, "overheads": [{"label": "Rental", "amount": 5700}, {"label": "Miscellaneous", "amount": 0}, {"label": "Salary", "amount": 16125}, {"label": "Fuel", "amount": 1057.06}, {"label": "Vehicle Expenses", "amount": 1308}, {"label": "Telephone", "amount": 70}], "net_profit": 12101.100000000002}, "Apr": {"transactions": [{"date": "2026-04-01", "client": "Emco Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1000, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-03", "client": "Emco Engg", "product": "Hydraulic Control Lever/Nylon Handle", "qty": 4, "landing": 0, "unit": 0, "invoice": 999, "expenses": 200, "workshop": 799, "profit": 200, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-01", "client": "Butec", "product": "Outrigger pads (1200x1200x60)", "qty": 16, "landing": 756.74, "unit": 1150, "invoice": 18400, "expenses": 12107.84, "workshop": 0, "profit": 5535.42, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-06", "client": "Oman United", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1000, "invoice": 1000, "expenses": 250, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-07", "client": "Silver Line", "product": "CRD cable", "qty": 18, "landing": 13.62, "unit": 21, "invoice": 378, "expenses": 245.16, "workshop": 25, "profit": 94.22, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-11", "client": "Gulf Construction Machinery", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 900, "invoice": 900, "expenses": 0, "workshop": 250, "profit": 650, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-12", "client": "Gulf Construction Machinery", "product": "A2B Switch (Full Set)", "qty": 1, "landing": 0, "unit": 900, "invoice": 900, "expenses": 0, "workshop": 50, "profit": 850, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-12", "client": "Qcon Engg", "product": "Recalibration", "qty": 3, "landing": 0, "unit": 1900, "invoice": 5700, "expenses": 0, "workshop": 750, "profit": 4950, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-13", "client": "Gulfar Al Misnad", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1000, "invoice": 1000, "expenses": 0, "workshop": 250, "profit": 750, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-14", "client": "Esnad Ahmed", "product": "Dash Camera (V25 Pro)", "qty": 1, "landing": 234.82, "unit": 0, "invoice": 335, "expenses": 0, "workshop": 100, "profit": 0, "inv_status": "Sent", "pay_status": "Partial"}, {"date": "2026-04-14", "client": "Mediterranean Equipment", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 800, "invoice": 800, "expenses": 0, "workshop": 250, "profit": 550, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-14", "client": "OTC", "product": "A2B Switch (only)", "qty": 1, "landing": 0, "unit": 600, "invoice": 600, "expenses": 0, "workshop": 25, "profit": 575, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-14", "client": "OTC", "product": "A2B Switch (only)", "qty": 1, "landing": 0, "unit": 600, "invoice": 600, "expenses": 0, "workshop": 25, "profit": 575, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-15", "client": "Descon Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-16", "client": "Al Sahib Trd", "product": "A2B Warning Device", "qty": 1, "landing": 286.79, "unit": 1360, "invoice": 1360, "expenses": 0, "workshop": 200, "profit": 873.21, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-17", "client": "Dime Marine", "product": "Load Test", "qty": 1, "landing": 0, "unit": 350, "invoice": 350, "expenses": 0, "workshop": 50, "profit": 300, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-18", "client": "Silver Line", "product": "4 Camera system", "qty": 2, "landing": 547.1, "unit": 1200, "invoice": 2400, "expenses": 1094.2, "workshop": 400, "profit": 358.69999999999993, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-19", "client": "Silver Line", "product": "1 Camera system", "qty": 1, "landing": 368.8, "unit": 600, "invoice": 600, "expenses": 368.8, "workshop": 125, "profit": 106.19999999999999, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-19", "client": "Mohmand Contracting", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-19", "client": "Fast Track Equipment", "product": "Outrigger pads (1000x1000x60)", "qty": 4, "landing": 540.28, "unit": 900, "invoice": 3600, "expenses": 2161.12, "workshop": 0, "profit": 898.6000000000001, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-20", "client": "Ali Bin Nasser Al Misnad", "product": "Outrigger pads (500x500x50)", "qty": 4, "landing": 119.54, "unit": 325, "invoice": 1300, "expenses": 478.16, "workshop": 0, "profit": 702.3, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-21", "client": "Fence Industries", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-22", "client": "OTC", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-23", "client": "Al Sahib Trd", "product": "A2B Warning Device", "qty": 1, "landing": 286.79, "unit": 1400, "invoice": 1400, "expenses": 286.79, "workshop": 200, "profit": 913.21, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-23", "client": "Danway Qatar", "product": "TPC certification", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 500, "workshop": 0, "profit": 250, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-25", "client": "Carmel Group", "product": "Length Calibration", "qty": 1, "landing": 0, "unit": 200, "invoice": 200, "expenses": 0, "workshop": 100, "profit": 100, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-26", "client": "Roots Energy", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-04-26", "client": "Esnad", "product": "CRD Repair", "qty": 1, "landing": 0, "unit": 235, "invoice": 235, "expenses": 0, "workshop": 75, "profit": 160, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-30", "client": "OTC", "product": "CRD cable", "qty": 20, "landing": 13.62, "unit": 21, "invoice": 420, "expenses": 272.4, "workshop": 25, "profit": 122.60000000000002, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-04-30", "client": "OTC", "product": "SLI System (BT)", "qty": 1, "landing": 13249.57, "unit": 0, "invoice": 21500, "expenses": 0, "workshop": 2000, "profit": 6250.43, "inv_status": "Sent", "pay_status": "Unpaid"}], "gross": {"invoice": 70877, "expenses": 18214.47, "workshop": 7449, "profit": 29664.889999999996}, "overheads": [{"label": "Rental", "amount": 5700}, {"label": "Salary", "amount": 16125}, {"label": "Fuel (Swift - 428.46, Veloz - 796.82)", "amount": 1225.31}, {"label": "ISO/IEC 17025 Certification Charges", "amount": 6000}, {"label": "Vehicle Expenses (Veloz -105, Swift 269)", "amount": 394}, {"label": "Telephone", "amount": 70}], "net_profit": 150.57999999999447}, "May": {"transactions": [{"date": "2026-05-02", "client": "Esnad Transport", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 900, "invoice": 900, "expenses": 0, "workshop": 250, "profit": 650, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-03", "client": "Draieh Contracting", "product": "Outrigger Pads (1200x1200x80mm)", "qty": 10, "landing": 905.52, "unit": 1400, "invoice": 14000, "expenses": 9055.2, "workshop": 0, "profit": 4944.799999999999, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-04", "client": "OTC", "product": "CRD Spring", "qty": 1, "landing": 296.06, "unit": 958, "invoice": 958, "expenses": 296.06, "workshop": 200, "profit": 461.94, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-06", "client": "Butec", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-11", "client": "Zeal It Trading", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-11", "client": "Project Service Co", "product": "Outrigger Pads (500x500x50mm)", "qty": 4, "landing": 119.54, "unit": 325, "invoice": 1300, "expenses": 478.16, "workshop": 0, "profit": 821.8399999999999, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-14", "client": "OTC", "product": "Recalibration", "qty": 4, "landing": 0, "unit": 750, "invoice": 3000, "expenses": 0, "workshop": 1000, "profit": 2000, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-14", "client": "Golden Rock", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-14", "client": "Galfar Al Misnad", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-14", "client": "Qcon Engg", "product": "Recalibration", "qty": 5, "landing": 0, "unit": 1900, "invoice": 9500, "expenses": 0, "workshop": 1250, "profit": 8250, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-14", "client": "Al Sahib Trading", "product": "A2B Switch and System Set-up", "qty": 1, "landing": 0, "unit": 1050, "invoice": 1050, "expenses": 0, "workshop": 400, "profit": 650, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-14", "client": "GITCO", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 250, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-14", "client": "OTC", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-17", "client": "Silver Line", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-17", "client": "Jaidah", "product": "SLI System (BT)", "qty": 1, "landing": 13249.57, "unit": 21000, "invoice": 21000, "expenses": 13249.57, "workshop": 2000, "profit": 5750.43, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-17", "client": "Zeal It Trading", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-19", "client": "Qcon Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1900, "invoice": 1900, "expenses": 0, "workshop": 250, "profit": 1650, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-18", "client": "Al Balagh", "product": "Recalibration", "qty": 2, "landing": 0, "unit": 1500, "invoice": 3000, "expenses": 0, "workshop": 500, "profit": 2500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-19", "client": "Carmel Group", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1000, "invoice": 1000, "expenses": 0, "workshop": 250, "profit": 750, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-20", "client": "OTC", "product": "CRD Spring", "qty": 1, "landing": 296.06, "unit": 958, "invoice": 958, "expenses": 296.06, "workshop": 200, "profit": 461.94, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-21", "client": "Al Balagh", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1500, "invoice": 1500, "expenses": 0, "workshop": 250, "profit": 1250, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-22", "client": "Qcon Engg", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1900, "invoice": 1900, "expenses": 0, "workshop": 250, "profit": 1650, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-23", "client": "Al Balagh", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1500, "invoice": 1500, "expenses": 0, "workshop": 250, "profit": 1250, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-24", "client": "Mirrikh", "product": "Pressure Guage Calibration", "qty": 2, "landing": 0, "unit": 75, "invoice": 150, "expenses": 60, "workshop": 0, "profit": 90, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-24", "client": "OTC", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-05-19", "client": "Silver Line", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-26", "client": "Silver Line", "product": "CRD Spring", "qty": 1, "landing": 296.06, "unit": 958, "invoice": 958, "expenses": 296.06, "workshop": 200, "profit": 461.94, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-26", "client": "Silver Line", "product": "Outrigger Pads (500x500x50mm)", "qty": 4, "landing": 119.54, "unit": 325, "invoice": 1300, "expenses": 478.16, "workshop": 0, "profit": 821.8399999999999, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-05-30", "client": "Al Musairie Trading", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}], "gross": {"invoice": 74624, "expenses": 24459.27, "workshop": 10000, "profit": 40164.729999999996}, "overheads": [{"label": "Rental", "amount": 5700}, {"label": "Incentive", "amount": 5120}, {"label": "ISO Consulting Charge", "amount": 5500}, {"label": "Ryno and food expenses", "amount": 1157.9}, {"label": "Mannai Commission", "amount": 2000}, {"label": "Salary", "amount": 16125}, {"label": "Fuel (Swift  - 699.91, Veloz - 742.18)", "amount": 1468.09}, {"label": "Vehicle Expenses (Veloz -220, Swift 895)", "amount": 1115}, {"label": "Telephone", "amount": 70}], "net_profit": 1908.739999999998}, "Jun": {"transactions": [{"date": "2026-06-01", "client": "Qcon", "product": "Anemometer Calibration", "qty": 2, "landing": 0, "unit": 350, "invoice": 700, "expenses": 180, "workshop": 0, "profit": 520, "inv_status": "Pending", "pay_status": "Unpaid"}, {"date": "2026-06-01", "client": "Auto Xpert Trading", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-02", "client": "Venus Services", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-03", "client": "Ramco Trading", "product": "Spark Arrestor", "qty": 2, "landing": 1060, "unit": 950, "invoice": 1900, "expenses": 1060, "workshop": 500, "profit": 340, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-06", "client": "Al Awaidha Transport", "product": "FL System", "qty": 1, "landing": 4208.47, "unit": 10500, "invoice": 10500, "expenses": 500, "workshop": 1000, "profit": 4791.53, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-06", "client": "Gulf Construction Machinery", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-06", "client": "Gulf Construction Machinery", "product": "CRD Cable", "qty": 18, "landing": 13.62, "unit": 21, "invoice": 378, "expenses": 245.16, "workshop": 25, "profit": 107.84, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-08", "client": "Excel Metal Industries", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 950, "invoice": 950, "expenses": 0, "workshop": 250, "profit": 700, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-08", "client": "Al Balagh Trading", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-09", "client": "Apogee Engineering", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-09", "client": "Apogee Engineering", "product": "TPC", "qty": 1, "landing": 0, "unit": 650, "invoice": 650, "expenses": 500, "workshop": 0, "profit": 150, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-09", "client": "OTC", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-09", "client": "Draieh Contracting", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 250, "profit": 600, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-10", "client": "Medgulf Contruction", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-14", "client": "Oman United", "product": "CRD Cable", "qty": 18, "landing": 13.62, "unit": 21, "invoice": 378, "expenses": 245.16, "workshop": 25, "profit": 107.84, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-15", "client": "GITCO", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 250, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-15", "client": "Carmal Group", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1000, "invoice": 1000, "expenses": 0, "workshop": 250, "profit": 750, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-15", "client": "Carmal Group", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 1000, "invoice": 1000, "expenses": 0, "workshop": 250, "profit": 750, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-15", "client": "Carmal Group", "product": "Spark Arrestor", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 530, "workshop": 150, "profit": 170, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-15", "client": "Carmal Group", "product": "TPC", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 500, "workshop": 0, "profit": 250, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-15", "client": "Carmal Group", "product": "Display Replacement", "qty": 1, "landing": 0, "unit": 500, "invoice": 500, "expenses": 0, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-15", "client": "Silver Line", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-15", "client": "Silver Line", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-17", "client": "GITCO", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 250, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-17", "client": "Silver Line", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-18", "client": "Silver Line", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-18", "client": "Silver Line", "product": "CRD Spring", "qty": 1, "landing": 296.06, "unit": 958, "invoice": 958, "expenses": 296.06, "workshop": 200, "profit": 461.94, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-18", "client": "Jaidah", "product": "SLI System (BT)", "qty": 1, "landing": 13249.57, "unit": 21000, "invoice": 21000, "expenses": 13249.57, "workshop": 2000, "profit": 5750.43, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-18", "client": "Al Ansari", "product": "A2B Switch (FS)", "qty": 1, "landing": 0, "unit": 850, "invoice": 850, "expenses": 0, "workshop": 150, "profit": 700, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-18", "client": "OTC", "product": "A2B Switch (Only)", "qty": 1, "landing": 0, "unit": 600, "invoice": 600, "expenses": 0, "workshop": 50, "profit": 550, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-18", "client": "GITCO", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 250, "workshop": 250, "profit": 250, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-21", "client": "Silver Line", "product": "Recalibration", "qty": 1, "landing": 0, "unit": 750, "invoice": 750, "expenses": 0, "workshop": 250, "profit": 500, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-23", "client": "Impressive Trading", "product": "CRD Cable", "qty": 20, "landing": 13.62, "unit": 21, "invoice": 420, "expenses": 272.4, "workshop": 0, "profit": 147.60000000000002, "inv_status": "Sent", "pay_status": "Paid"}, {"date": "2026-06-25", "client": "Global Sources", "product": "Pressure Gauge recalibration", "qty": 1, "landing": 0, "unit": 0, "invoice": 650, "expenses": 0, "workshop": 150, "profit": 500, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-30", "client": "Qcon", "product": "CRD Cable", "qty": 20, "landing": 13.62, "unit": 21, "invoice": 420, "expenses": 272.4, "workshop": 0, "profit": 147.60000000000002, "inv_status": "Sent", "pay_status": "Unpaid"}, {"date": "2026-06-30", "client": "Medgulf Contruction", "product": "CRD Cable", "qty": 18, "landing": 13.62, "unit": 21, "invoice": 378, "expenses": 245.16, "workshop": 25, "profit": 107.84, "inv_status": "Sent", "pay_status": "Paid"}], "gross": {"invoice": 57332, "expenses": 18845.910000000003, "workshop": 9275, "profit": 25002.62}, "overheads": [{"label": "Rental", "amount": 5700}, {"label": "Salary", "amount": 16125}, {"label": "Fuel (Swift  - 620.96, Veloz - 902.40)", "amount": 1549.36}, {"label": "Shipping Charge (FedEx)", "amount": 442.3}, {"label": "Health Card (Fasalu)", "amount": 100}, {"label": "Vehicle Expenses (Veloz -115, Swift 730)", "amount": 845}, {"label": "Telephone", "amount": 70}], "net_profit": 170.95999999999913}}, "summary": {"Jan": {"txns": 21, "revenue": 103310, "expenses": 13278.67, "workshop": 9650, "direct": 22928.67, "gross_profit": 34355.479999999996, "overheads": 11361.38, "net_profit": 22994.1, "oh_lines": 5}, "Feb": {"txns": 25, "revenue": 185850, "expenses": 27092.73, "workshop": 15225, "direct": 42317.729999999996, "gross_profit": 58017.04000000001, "overheads": 25433.75, "net_profit": 32583.290000000008, "oh_lines": 7}, "Mar": {"txns": 26, "revenue": 111055, "expenses": 6562.85, "workshop": 13650, "direct": 20212.85, "gross_profit": 36361.16, "overheads": 24260.06, "net_profit": 12101.100000000002, "oh_lines": 6}, "Apr": {"txns": 30, "revenue": 70877, "expenses": 18214.47, "workshop": 7449, "direct": 25663.47, "gross_profit": 29664.889999999996, "overheads": 29514.31, "net_profit": 150.57999999999447, "oh_lines": 6}, "May": {"txns": 29, "revenue": 74624, "expenses": 24459.27, "workshop": 10000, "direct": 34459.270000000004, "gross_profit": 40164.729999999996, "overheads": 38255.99, "net_profit": 1908.739999999998, "oh_lines": 9}, "Jun": {"txns": 36, "revenue": 57332, "expenses": 18845.910000000003, "workshop": 9275, "direct": 28120.910000000003, "gross_profit": 25002.62, "overheads": 24831.66, "net_profit": 170.95999999999913, "oh_lines": 7}}, "inventory": [{"name": "Outrigger Pads", "category": "Crane Parts", "type": "500x500x50mm", "purchased": 240, "stock": 27, "eoq": 10, "new_order": 25, "sold": 213, "stock_value": 2881.1699999999996, "landing": 106.71, "asp": 325, "profit": 46495.770000000004}, {"name": "Outrigger Pads", "category": "Crane Parts", "type": "1000x1000x60mm", "purchased": 65, "stock": 0, "eoq": 10, "new_order": 50, "sold": 65, "stock_value": 0, "landing": 515.23, "asp": 945.91, "profit": 27994.199999999997}, {"name": "Outrigger Pads", "category": "Crane Parts", "type": "1200x1200x60mm", "purchased": 61, "stock": 0, "eoq": 10, "new_order": 50, "sold": 61, "stock_value": 0, "landing": 756.74, "asp": 1150, "profit": 23988.86}, {"name": "Outrigger Pads", "category": "Crane Parts", "type": "1200x1200x80mm", "purchased": 40, "stock": 1, "eoq": 10, "new_order": 50, "sold": 39, "stock_value": 905.52, "landing": 905.52, "asp": 1400, "profit": 19284.72}, {"name": "Arc Light", "category": "Electrical Parts", "type": "Forklift", "purchased": 44, "stock": 35, "eoq": 5, "new_order": 0, "sold": 9, "stock_value": 3471.3, "landing": 99.18, "asp": 325, "profit": 2032.3799999999999}, {"name": "BT Camera", "category": "Camera System", "type": "Boom Truck", "purchased": 6, "stock": 2, "eoq": 2, "new_order": 0, "sold": 4, "stock_value": 953.46, "landing": 476.73, "asp": 1100, "profit": 2493.08}, {"name": "FL Camera", "category": "Camera System", "type": "Forklift", "purchased": 6, "stock": 0, "eoq": 2, "new_order": 0, "sold": 6, "stock_value": 0, "landing": 365.69, "asp": 1000, "profit": 3805.8599999999997}, {"name": "A2B Warning Device", "category": "Crane Parts", "type": "Boom Truck", "purchased": 10, "stock": 2, "eoq": 2, "new_order": 10, "sold": 8, "stock_value": 573.58, "landing": 286.79, "asp": 1340.75, "profit": 8431.68}, {"name": "Bus Stop Sign Board", "category": "Others", "type": "School Bus", "purchased": 1, "stock": 1, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 467.17, "landing": 467.17, "asp": 1000, "profit": 0}, {"name": "Wolfbox G850", "category": "Camera System", "type": "SUV", "purchased": 2, "stock": 0, "eoq": "As per demand", "new_order": 0, "sold": 2, "stock_value": 0, "landing": 377.76, "asp": 713.88, "profit": 672.24}, {"name": "Wolfbox G900PRO", "category": "Camera System", "type": "SUV", "purchased": 9, "stock": 2, "eoq": 2, "new_order": 0, "sold": 7, "stock_value": 3682.75, "landing": 736.55, "asp": 1057.14, "profit": 2244.130000000001}, {"name": "Bson 4K", "category": "Camera System", "type": "Sedan", "purchased": 2, "stock": 0, "eoq": "As per demand", "new_order": 0, "sold": 2, "stock_value": 0, "landing": 155.88, "asp": 580, "profit": 848.24}, {"name": "TPMS", "category": "Others", "type": "Car", "purchased": 2, "stock": 1, "eoq": "As per demand", "new_order": 0, "sold": 1, "stock_value": 238.96, "landing": 238.96, "asp": 289, "profit": 50.03999999999999}, {"name": "TPMS", "category": "Others", "type": "Forklift (4)", "purchased": 1, "stock": 1, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 122.16, "landing": 122.16, "asp": 400, "profit": 0}, {"name": "TPMS", "category": "Others", "type": "Forklift (6)", "purchased": 1, "stock": 1, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 405.4, "landing": 405.4, "asp": 850, "profit": 0}, {"name": "TPMS", "category": "Others", "type": "Boom Truck (10)", "purchased": 2, "stock": 1, "eoq": "As per demand", "new_order": 0, "sold": 1, "stock_value": 596.68, "landing": 596.68, "asp": 596.68, "profit": 0}, {"name": "Side Marker Light", "category": "Electrical Parts", "type": "Truck", "purchased": 100, "stock": 100, "eoq": 20, "new_order": 0, "sold": 0, "stock_value": 568.98, "landing": 5.68, "asp": 7.5, "profit": 0}, {"name": "Side Beam Light", "category": "Electrical Parts", "type": "Forklift", "purchased": 10, "stock": 0, "eoq": 2, "new_order": 0, "sold": 10, "stock_value": 0, "landing": 51.9, "asp": 300, "profit": 2481}, {"name": "Parking Air Condition", "category": "Others", "type": "Truck", "purchased": 1, "stock": 1, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 2237, "landing": 2237, "asp": 3250, "profit": 0}, {"name": "Trailer Camera", "category": "Camera System", "type": "Trailer (6)", "purchased": 1, "stock": 1, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 1249.69, "landing": 1249.69, "asp": 1950, "profit": 0}, {"name": "Adinkam V25Pro", "category": "Mirror Cam", "type": "Car", "purchased": 9, "stock": 5, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 1114.1, "landing": 222.82, "asp": 450, "profit": 0}, {"name": "Adinkam V238", "category": "Mirror Cam", "type": "Car", "purchased": 1, "stock": 0, "eoq": "As per demand", "new_order": 0, "sold": 1, "stock_value": 0, "landing": 317.72, "asp": 467.72, "profit": 150}, {"name": "1 Camera System", "category": "Camera System", "type": "Equipment", "purchased": 5, "stock": 4, "eoq": "As per demand", "new_order": 0, "sold": 1, "stock_value": 1475.2, "landing": 368.8, "asp": 600, "profit": 231.2}, {"name": "2 Camera System", "category": "Camera System", "type": "Equipment", "purchased": 3, "stock": 3, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 1286.43, "landing": 428.81, "asp": 675, "profit": 0}, {"name": "4 Camera System", "category": "Camera System", "type": "Truck/BT", "purchased": 3, "stock": 0, "eoq": "As per demand", "new_order": 0, "sold": 3, "stock_value": 0, "landing": 547.1, "asp": 1233.33, "profit": 2058.6899999999996}, {"name": "4 Camera Wireless System", "category": "Camera System", "type": "Truck/BT", "purchased": 3, "stock": 3, "eoq": "As per demand", "new_order": 0, "sold": 0, "stock_value": 2112.81, "landing": 704.27, "asp": 1300, "profit": 0}, {"name": "10mm Wire Rope", "category": "Others", "type": "Boom Truck", "purchased": 1495, "stock": 1395, "eoq": "500m", "new_order": 0, "sold": 100, "stock_value": 4084.16, "landing": 2.72, "asp": 9, "profit": 627.9999999999999}, {"name": "CRD CABLE", "category": "SLI Parts", "type": "safe load indicator", "purchased": 0, "stock": 0, "eoq": 100, "new_order": 500, "sold": 0, "stock_value": 0, "landing": 0, "asp": 0, "profit": 0}, {"name": "12mm Wire Rope", "category": "Others", "type": "Boom Truck", "purchased": 1995, "stock": 950, "eoq": "500m", "new_order": 0, "sold": 1045, "stock_value": 5048.20025, "landing": 5.313895, "asp": 13.92, "profit": 8993.379725}], "orders": [{"name": "Outrigger Pads", "category": "Crane Parts", "type": "500x500x50mm", "qty": 25, "ship": "22-Jul-2026", "eta": "22-Aug-2026", "value": 1971}, {"name": "Outrigger Pads", "category": "Crane Parts", "type": "1000x1000x60mm", "qty": 50, "ship": "22-Jul-2026", "eta": "22-Aug-2026", "value": 19345}, {"name": "Outrigger Pads", "category": "Crane Parts", "type": "1200x1200x60mm", "qty": 50, "ship": "22-Jul-2026", "eta": "22-Aug-2026", "value": 28068.5}, {"name": "Outrigger Pads", "category": "Crane Parts", "type": "1200x1200x80mm", "qty": 50, "ship": "22-Jul-2026", "eta": "22-Aug-2026", "value": 37230}, {"name": "CRD Cable", "category": "SLI Parts", "type": "4Core", "qty": "500m", "ship": "22-Jul-2026", "eta": "22-Aug-2026", "value": 1777.78}, {"name": "Fork Rotator", "category": "Other", "type": "Attachment", "qty": 1, "ship": "22-Jul-2026", "eta": "22-Aug-2026", "value": null}, {"name": "Wireless A2B Device", "category": "Crane Parts", "type": "Safety Product", "qty": 17, "ship": "22-Jul-2026", "eta": "22-Aug-2026", "value": null}], "due2025": [{"date": "12-Oct-2025", "company": "M/S Oriental Trading Company", "value": 1000, "desc": "Recalibration", "due": "11-Nov-2025", "overdue": 217, "remarks": "Unpaid"}, {"date": "31-Oct-2025", "company": "M/S Oriental Trading Company", "value": 42000, "desc": "2x SLI system", "due": "30-Nov-2025", "overdue": 198, "remarks": "Unpaid"}, {"date": "31-Oct-2025", "company": "M/S Oriental Trading Company", "value": 1000, "desc": "Recalibration", "due": "30-Nov-2025", "overdue": 198, "remarks": "Unpaid"}, {"date": "10-Nov-2025", "company": "M/S Oriental Trading Company", "value": 2000, "desc": "Recalibration", "due": "10-Dec-2025", "overdue": 188, "remarks": "Unpaid"}, {"date": "17-Nov-2025", "company": "M/S Oriental Trading Company", "value": 4200, "desc": "4x Arc Light", "due": "17-Dec-2025", "overdue": 181, "remarks": "Unpaid"}, {"date": "24-Nov-2025", "company": "M/S Oriental Trading Company", "value": 1250, "desc": "Crane Calibration Cert", "due": "24-Dec-2025", "overdue": 174, "remarks": "Unpaid"}, {"date": "30-Nov-2025", "company": "M/S Oriental Trading Company", "value": 10500, "desc": "Payload Indicator", "due": "30-Dec-2025", "overdue": 168, "remarks": "Unpaid"}, {"date": "16-Dec-2025", "company": "M/S Oriental Trading Company", "value": 3600, "desc": "Recalibration", "due": "15-Jan-2026", "overdue": 152, "remarks": "Unpaid"}, {"date": "20-Dec-2025", "company": "M/S Oriental Trading Company", "value": 1050, "desc": "1x Arc Light ", "due": "19-Jan-2026", "overdue": 148, "remarks": "Unpaid"}], "certCounts": {"Jan": 9, "Feb": 9, "Mar": 16, "Apr": 13, "May": 32, "Jun": 17}, "certTarget": 210};
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun'];
+const MONTH_FULL = {Jan:'January',Feb:'February',Mar:'March',Apr:'April',May:'May',Jun:'June'};
+let cur = 'Jun';
+const charts = {};
+
+const fmt = n => 'QAR ' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt0 = n => 'QAR ' + Math.round(n).toLocaleString('en-US');
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function group(product){
+  const p = product.toLowerCase();
+  if(/calibration|recalibration|tpc|load test|certif|pressure g/.test(p)) return 'Calibration & Certification';
+  if(/sli|payload|pli|fl system/.test(p)) return 'SLI / PLI Systems';
+  if(/outrigger/.test(p)) return 'Outrigger Pads';
+  if(/camera|wolfbox/.test(p)) return 'Camera Systems';
+  if(/a2b/.test(p)) return 'A2B Devices';
+  if(/crd|wire rope|pulley|proxy|spring|cable/.test(p)) return 'Cables, Ropes & Parts';
+  if(/anemometer/.test(p)) return 'Anemometer';
+  return 'Other Sales & Services';
+}
+const isCal = p => /calibration|recalibration|tpc|load test|certif|pressure g/.test(p.toLowerCase());
+
+function pill(status){
+  const s = (status||'').toLowerCase();
+  if(s.includes('paid') && !s.includes('un')) return '<span class="pill paid">Paid</span>';
+  if(s.includes('unpaid')) return '<span class="pill unpaid">Unpaid</span>';
+  if(s.includes('partial')) return '<span class="pill partial">Partial</span>';
+  return '<span class="pill pending">'+esc(status||'—')+'</span>';
+}
+
+/* ---------- Overview ---------- */
+function renderOverview(){
+  const s = DATA.summary[cur], m = DATA.months[cur];
+  document.getElementById('ov-sub').textContent = 'Trading performance for '+MONTH_FULL[cur]+' 2026.';
+  document.getElementById('meta-line').textContent = s.txns+' invoices · '+cur+' 2026 sheet · Day Book 2026';
+  const np = s.net_profit;
+  const banner = document.getElementById('ov-banner');
+  if(np < 500){
+    const cls = np < 0 ? 'loss':'loss';
+    banner.innerHTML = '<div class="banner '+(np<0?'loss':'loss')+'"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div><b>'+(np<0?'Net loss this period: ':'Thin margin this period: net profit only ')+fmt(np)+'.</b> Gross profit ('+fmt(s.gross_profit)+') '+(np<0?"doesn't cover":'barely covers')+' overheads ('+fmt(s.overheads)+'). See the Overheads panel for the largest cost drivers.</div></div>';
+  } else {
+    banner.innerHTML = '<div class="banner gain"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><div><b>Net profit this period: '+fmt(np)+'.</b> Gross profit ('+fmt(s.gross_profit)+') covers overheads ('+fmt(s.overheads)+') with margin to spare.</div></div>';
+  }
+  const kpis = [
+    ['Invoices', s.txns, s.txns+' rows · '+cur+' 2026 sheet','var(--blue)',false],
+    ['Gross Revenue', fmt(s.revenue), "sheet Totals: Invoice Value",'var(--text-dim)',false],
+    ['Direct Job Costs', fmt(s.direct), 'Expenses '+fmt0(s.expenses)+' + Workshop '+fmt0(s.workshop),'var(--amber)',false],
+    ['Gross Profit', fmt(s.gross_profit), 'sum of Profit column','var(--green)',false],
+    ['Overheads', fmt(s.overheads), s.oh_lines+' fixed-cost lines, '+cur+' sheet','var(--red)',false],
+    ['Net Profit', fmt(np), 'Gross Profit − Overheads','var(--orange)', np<0],
+  ];
+  document.getElementById('ov-kpis').innerHTML = kpis.map(k=>'<div class="kpi" style="--accent:'+k[3]+'"><div class="label">'+k[0]+'</div><div class="value '+(k[4]?'neg':'pos')+'">'+k[1]+'</div><div class="d">'+k[2]+'</div></div>').join('');
+
+  document.getElementById('oh-month').textContent = MONTH_FULL[cur]+' 2026';
+  document.getElementById('oh-sub').textContent = 'Fixed costs recorded below the sales register on the '+cur+' sheet';
+  const rows = m.overheads.map(o=>'<tr><td class="strong">'+esc(o.label)+'</td><td class="num">'+fmt(o.amount)+'</td></tr>').join('');
+  document.getElementById('oh-table').innerHTML = '<tr><th>Cost line</th><th class="num">Amount</th></tr>'+rows+'<tr class="total-row"><td>Total overheads</td><td class="num">'+fmt(s.overheads)+'</td></tr>';
+
+  // revenue mix chart
+  const mix = {};
+  m.transactions.forEach(t=>{ const g = group(t.product); mix[g]=(mix[g]||0)+t.invoice; });
+  const entries = Object.entries(mix).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('mix-month').textContent = MONTH_FULL[cur]+' 2026';
+  drawChart('chart-mix',{type:'doughnut',data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:['#F7941D','#3D8BFF','#2FAE6B','#E5484D','#E8B33C','#9B7BF7','#5B6472','#38B6C4'],borderColor:'#15181D',borderWidth:2}]},options:{plugins:{legend:{position:'right',labels:{color:'#8A93A1',boxWidth:10,font:{size:10.5}}},tooltip:{callbacks:{label:c=>c.label+': '+fmt0(c.parsed)}}},cutout:'58%'}});
+}
+
+/* ---------- Sales ---------- */
+function renderSales(){
+  const s = DATA.summary[cur], m = DATA.months[cur];
+  document.getElementById('sales-sub').textContent = 'Invoice register and collection status — '+MONTH_FULL[cur]+' 2026.';
+  document.getElementById('sales-month').textContent = MONTH_FULL[cur]+' 2026';
+  let paid=0, unpaid=0, other=0;
+  m.transactions.forEach(t=>{
+    const st=(t.pay_status||'').toLowerCase();
+    if(st==='paid') paid+=t.invoice; else if(st==='unpaid') unpaid+=t.invoice; else other+=t.invoice;
+  });
+  const ytdRev = MONTHS.reduce((a,k)=>a+DATA.summary[k].revenue,0);
+  const due2025Total = DATA.due2025.reduce((a,d)=>a+d.value,0);
+  const kpis=[
+    ['Gross Revenue',fmt(s.revenue),'sheet Totals row','var(--orange)'],
+    ['Collected (Paid)',fmt(paid),(s.revenue?Math.round(paid/s.revenue*100):0)+'% of month revenue','var(--green)'],
+    ['Outstanding (Unpaid)',fmt(unpaid),(s.revenue?Math.round(unpaid/s.revenue*100):0)+'% of month revenue','var(--red)'],
+    ['2025 Outstanding',fmt(due2025Total),DATA.due2025.length+' unpaid invoices · Due-2025 sheet','var(--red)'],
+    ['Total Receivables',fmt(unpaid+other+due2025Total),cur+' unpaid + partial + 2025 dues','var(--amber)'],
+    ['YTD Revenue',fmt(ytdRev),'Jan–Jun 2026 combined','var(--blue)'],
+  ];
+  document.getElementById('sales-kpis').innerHTML = kpis.map(k=>'<div class="kpi" style="--accent:'+k[3]+'"><div class="label">'+k[0]+'</div><div class="value pos" style="font-size:20px;">'+k[1]+'</div><div class="d">'+k[2]+'</div></div>').join('');
+
+  const rows = m.transactions.map(t=>'<tr><td>'+t.date.slice(8)+' '+cur+'</td><td class="strong">'+esc(t.client)+'</td><td>'+esc(t.product)+'</td><td class="num">'+esc(t.qty??'—')+'</td><td class="num">'+fmt0(t.invoice)+'</td><td class="num">'+fmt0(t.expenses+t.workshop)+'</td><td class="num" style="color:'+(t.profit>=0?'var(--green)':'var(--red)')+'">'+fmt0(t.profit)+'</td><td>'+pill(t.pay_status)+'</td></tr>').join('');
+  document.getElementById('sales-table').innerHTML = '<tr><th>Date</th><th>Client</th><th>Product / Service</th><th class="num">Qty</th><th class="num">Invoice</th><th class="num">Job Costs</th><th class="num">Profit</th><th>Payment</th></tr>'+rows+'<tr class="total-row"><td colspan="4">Totals ('+s.txns+' invoices)</td><td class="num">'+fmt0(s.revenue)+'</td><td class="num">'+fmt0(s.direct)+'</td><td class="num">'+fmt0(s.gross_profit)+'</td><td></td></tr>';
+
+  const due = DATA.due2025;
+  const maxOd = Math.max(...due.map(d=>d.overdue));
+  document.getElementById('due-banner').innerHTML = '<div class="banner loss"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div><b>2025 outstanding: '+fmt(due2025Total)+' still unpaid.</b> All '+due.length+' invoices are owed by M/S Oriental Trading Company, with the oldest now '+maxOd+' days overdue.</div></div>';
+  document.getElementById('due-table').innerHTML = '<tr><th>Date</th><th>Company</th><th>Description</th><th class="num">Invoice Value</th><th>Due On</th><th class="num">Overdue (days)</th><th>Status</th></tr>'+
+    due.map(d=>'<tr><td>'+esc(d.date)+'</td><td class="strong">'+esc(d.company)+'</td><td>'+esc(d.desc)+'</td><td class="num">'+fmt0(d.value)+'</td><td>'+esc(d.due)+'</td><td class="num" style="color:var(--red)">'+d.overdue+'</td><td>'+pill(d.remarks)+'</td></tr>').join('')+
+    '<tr class="total-row"><td colspan="3">Total outstanding from 2025</td><td class="num">'+fmt0(due.reduce((a,d)=>a+d.value,0))+'</td><td colspan="3"></td></tr>';
+}
+
+/* ---------- Products ---------- */
+function renderProducts(){
+  const inv = DATA.inventory;
+  const totSold = inv.reduce((a,p)=>a+(+p.sold||0),0);
+  const totProfit = inv.reduce((a,p)=>a+(+p.profit||0),0);
+  const totStockVal = inv.reduce((a,p)=>a+(+p.stock_value||0),0);
+  const totStock = inv.reduce((a,p)=>a+(+p.stock||0),0);
+  const kpis=[
+    ['Product Lines',inv.length,'incl. size / type variants','var(--blue)'],
+    ['Units Sold (lifetime)',totSold.toLocaleString(),'incl. wire rope by metre','var(--orange)'],
+    ['Units In Stock',totStock.toLocaleString(),'across all product lines','var(--green)'],
+    ['Stock Value',fmt(totStockVal),'at landing cost','var(--amber)'],
+    ['Realised Profit',fmt(totProfit),'Profit column total','var(--green)'],
+  ];
+  document.getElementById('prod-kpis').innerHTML = kpis.map(k=>'<div class="kpi" style="--accent:'+k[3]+'"><div class="label">'+k[0]+'</div><div class="value pos" style="font-size:20px;">'+k[1]+'</div><div class="d">'+k[2]+'</div></div>').join('');
+
+  const named = {};
+  inv.forEach(p=>{ const key = p.name+(p.name==='Outrigger Pads'?' '+p.type:''); named[key]=(named[key]||0)+(+p.profit||0); });
+  const top = Object.entries(named).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  drawChart('chart-prod-profit',{type:'bar',data:{labels:top.map(e=>e[0]),datasets:[{data:top.map(e=>e[1]),backgroundColor:'#F7941D',borderRadius:5}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt0(c.parsed.x)}}},scales:{x:{grid:{color:'#1E232A'},ticks:{color:'#8A93A1',callback:v=>(v/1000)+'k'}},y:{grid:{display:false},ticks:{color:'#8A93A1',font:{size:10.5}}}}}});
+
+  const cats = {};
+  inv.forEach(p=>{ const c=p.category||'Other'; cats[c]=cats[c]||{sold:0,stock:0}; cats[c].sold+=(+p.sold||0); cats[c].stock+=(+p.stock||0); });
+  const clabels = Object.keys(cats);
+  drawChart('chart-cat',{type:'bar',data:{labels:clabels,datasets:[
+    {label:'Sold',data:clabels.map(c=>cats[c].sold),backgroundColor:'#F7941D',borderRadius:4},
+    {label:'In stock',data:clabels.map(c=>cats[c].stock),backgroundColor:'#3D8BFF',borderRadius:4}]},
+    options:{plugins:{legend:{labels:{color:'#8A93A1',boxWidth:10}}},scales:{x:{grid:{display:false},ticks:{color:'#8A93A1',font:{size:10}}},y:{grid:{color:'#1E232A'},ticks:{color:'#8A93A1'}}}}});
+
+  const rows = inv.map(p=>{
+    const margin = p.asp && p.landing ? Math.round((p.asp-p.landing)/p.asp*100) : null;
+    return '<tr><td class="strong">'+esc(p.name)+'</td><td>'+esc(p.category)+'</td><td>'+esc(p.type)+'</td>'+
+    '<td class="num">'+p.purchased+'</td><td class="num">'+p.sold+'</td><td class="num">'+p.stock+'</td>'+
+    '<td class="num">'+fmt0(p.stock_value)+'</td><td class="num">'+(+p.landing).toLocaleString()+'</td><td class="num">'+(+p.asp).toLocaleString()+'</td>'+
+    '<td class="num">'+(margin===null?'—':margin+'%')+'</td><td class="num" style="color:'+(p.profit>0?'var(--green)':'var(--text-faint)')+'">'+fmt0(p.profit)+'</td></tr>';
+  }).join('');
+  document.getElementById('prod-table').innerHTML = '<tr><th>Product</th><th>Category</th><th>Type / Size</th><th class="num">Purchased</th><th class="num">Sold</th><th class="num">Stock</th><th class="num">Stock Value</th><th class="num">Landing</th><th class="num">Avg Sell</th><th class="num">Margin</th><th class="num">Profit</th></tr>'+rows+
+  '<tr class="total-row"><td colspan="3">Totals</td><td class="num">'+inv.reduce((a,p)=>a+(+p.purchased||0),0).toLocaleString()+'</td><td class="num">'+totSold.toLocaleString()+'</td><td class="num">'+totStock.toLocaleString()+'</td><td class="num">'+fmt0(totStockVal)+'</td><td colspan="3"></td><td class="num">'+fmt0(totProfit)+'</td></tr>';
+}
+
+/* ---------- Inventory ---------- */
+function renderInventory(){
+  const inv = DATA.inventory;
+  const low = inv.filter(p=>typeof p.eoq==='number' && p.stock<=p.eoq);
+  const out = inv.filter(p=>p.stock===0);
+  const totStockVal = inv.reduce((a,p)=>a+(+p.stock_value||0),0);
+  const incoming = DATA.orders.reduce((a,o)=>a+(typeof o.qty==='number'?o.qty:0),0);
+  const incomingVal = DATA.orders.reduce((a,o)=>a+(+o.value||0),0);
+  const kpis=[
+    ['Stock Value',fmt(totStockVal),'at landing cost','var(--orange)'],
+    ['Lines At / Below EOQ',low.length,'reorder point reached','var(--red)'],
+    ['Out Of Stock',out.length,'zero units on hand','var(--red)'],
+    ['Incoming Units',incoming+' + 500m cable',DATA.orders.length+' purchase orders in transit','var(--blue)'],
+    ['Incoming Order Value',fmt(incomingVal),'ETA 22 Aug 2026','var(--green)'],
+  ];
+  document.getElementById('inv-kpis').innerHTML = kpis.map(k=>'<div class="kpi" style="--accent:'+k[3]+'"><div class="label">'+k[0]+'</div><div class="value pos" style="font-size:20px;">'+k[1]+'</div><div class="d">'+k[2]+'</div></div>').join('');
+
+  document.getElementById('inv-banner').innerHTML = low.length ? '<div class="banner loss"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><div><b>'+low.length+' product lines at or below their EOQ</b>, including all four Outrigger Pad sizes — replacement stock for the pads, CRD cable, wireless A2B devices and a fork rotator is already on order (ETA 22 Aug 2026).</div></div>' : '';
+
+  const rows = inv.map(p=>{
+    let st;
+    if(p.stock===0) st='<span class="pill out">Out of stock</span>';
+    else if(typeof p.eoq==='number' && p.stock<=p.eoq) st='<span class="pill low">Reorder</span>';
+    else st='<span class="pill ok">OK</span>';
+    return '<tr><td class="strong">'+esc(p.name)+'</td><td>'+esc(p.category)+'</td><td>'+esc(p.type)+'</td><td class="num">'+p.stock+'</td><td class="num">'+esc(p.eoq??'—')+'</td><td class="num">'+p.new_order+'</td><td class="num">'+fmt0(p.stock_value)+'</td><td>'+st+'</td></tr>';
+  }).join('');
+  document.getElementById('inv-table').innerHTML = '<tr><th>Product</th><th>Category</th><th>Type / Size</th><th class="num">Current Stock</th><th class="num">EOQ</th><th class="num">On Order</th><th class="num">Stock Value</th><th>Status</th></tr>'+rows;
+
+  document.getElementById('order-table').innerHTML = '<tr><th>Product</th><th>Category</th><th>Type / Size</th><th class="num">Qty</th><th>Shipped</th><th>ETA</th><th class="num">Order Value</th></tr>'+
+    DATA.orders.map(o=>'<tr><td class="strong">'+esc(o.name)+'</td><td>'+esc(o.category)+'</td><td>'+esc(o.type)+'</td><td class="num">'+esc(o.qty)+'</td><td>'+esc(o.ship||'—')+'</td><td>'+esc(o.eta||'—')+'</td><td class="num">'+(o.value==null?'—':fmt0(o.value))+'</td></tr>').join('')+
+    '<tr class="total-row"><td colspan="6">Total incoming order value (excl. items without a stated value)</td><td class="num">'+fmt0(DATA.orders.reduce((a,o)=>a+(+o.value||0),0))+'</td></tr>';
+}
+
+/* ---------- Calibration ---------- */
+function renderCalibration(){
+  const cc = DATA.certCounts;
+  const issued = MONTHS.reduce((a,k)=>a+cc[k],0);
+  const calByMonth = {};
+  MONTHS.forEach(k=>{
+    const tx = DATA.months[k].transactions.filter(t=>isCal(t.product));
+    calByMonth[k] = {rev: tx.reduce((a,t)=>a+t.invoice,0), profit: tx.reduce((a,t)=>a+t.profit,0), jobs: tx.length};
+  });
+  const ytdRev = MONTHS.reduce((a,k)=>a+calByMonth[k].rev,0);
+  const ytdPf = MONTHS.reduce((a,k)=>a+calByMonth[k].profit,0);
+  const kpis=[
+    ['Certificates Issued',issued+' / 210','Jan–Jun, Goal-2026 sheet','var(--orange)'],
+    ['This Month ('+cur+')',cc[cur],'certificates issued','var(--blue)'],
+    ['Remaining To Target',210-issued,'due to expire by 31 Dec','var(--amber)'],
+    ['Calibration Revenue YTD',fmt(ytdRev),'from Day Book invoices','var(--green)'],
+    ['Calibration Profit YTD',fmt(ytdPf),'before overheads','var(--green)'],
+  ];
+  document.getElementById('cal-kpis').innerHTML = kpis.map(k=>'<div class="kpi" style="--accent:'+k[3]+'"><div class="label">'+k[0]+'</div><div class="value pos" style="font-size:20px;">'+k[1]+'</div><div class="d">'+k[2]+'</div></div>').join('');
+
+  const pct = Math.round(issued/210*100);
+  document.getElementById('cal-bar').style.width = pct+'%';
+  document.getElementById('cal-prog-sub').textContent = issued+' of 210 certificates issued ('+pct+'%) — best month so far: May with 32 certificates.';
+
+  drawChart('chart-certs',{type:'bar',data:{labels:MONTHS,datasets:[{data:MONTHS.map(k=>cc[k]),backgroundColor:MONTHS.map(k=>k===cur?'#F7941D':'#3A2A16'),borderColor:'#C9701A',borderWidth:1,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#8A93A1'}},y:{grid:{color:'#1E232A'},ticks:{color:'#8A93A1',stepSize:8}}}}});
+  drawChart('chart-cal-rev',{type:'bar',data:{labels:MONTHS,datasets:[
+    {label:'Revenue',data:MONTHS.map(k=>calByMonth[k].rev),backgroundColor:'#3D8BFF',borderRadius:4},
+    {label:'Profit',data:MONTHS.map(k=>calByMonth[k].profit),backgroundColor:'#2FAE6B',borderRadius:4}]},
+    options:{plugins:{legend:{labels:{color:'#8A93A1',boxWidth:10}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt0(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#8A93A1'}},y:{grid:{color:'#1E232A'},ticks:{color:'#8A93A1',callback:v=>(v/1000)+'k'}}}}});
+
+  document.getElementById('cal-month').textContent = MONTH_FULL[cur]+' 2026';
+  const tx = DATA.months[cur].transactions.filter(t=>isCal(t.product));
+  document.getElementById('cal-table').innerHTML = '<tr><th>Date</th><th>Client</th><th>Service</th><th class="num">Qty</th><th class="num">Invoice</th><th class="num">Profit</th><th>Payment</th></tr>'+
+    tx.map(t=>'<tr><td>'+t.date.slice(8)+' '+cur+'</td><td class="strong">'+esc(t.client)+'</td><td>'+esc(t.product)+'</td><td class="num">'+esc(t.qty)+'</td><td class="num">'+fmt0(t.invoice)+'</td><td class="num" style="color:var(--green)">'+fmt0(t.profit)+'</td><td>'+pill(t.pay_status)+'</td></tr>').join('')+
+    '<tr class="total-row"><td colspan="4">'+tx.length+' calibration jobs</td><td class="num">'+fmt0(tx.reduce((a,t)=>a+t.invoice,0))+'</td><td class="num">'+fmt0(tx.reduce((a,t)=>a+t.profit,0))+'</td><td></td></tr>';
+}
+
+/* ---------- Shared charts ---------- */
+function renderTrendCharts(){
+  drawChart('chart-monthly',{type:'bar',data:{labels:MONTHS.map(k=>k+' 26'),datasets:[
+    {label:'Gross Revenue',data:MONTHS.map(k=>DATA.summary[k].revenue),backgroundColor:MONTHS.map(k=>k===cur?'#F7941D':'#7A4E14'),borderRadius:5,order:2},
+    {label:'Gross Profit',data:MONTHS.map(k=>DATA.summary[k].gross_profit),backgroundColor:'#3D8BFF',borderRadius:5,order:2},
+    {label:'Net Profit',type:'line',data:MONTHS.map(k=>DATA.summary[k].net_profit),borderColor:'#2FAE6B',backgroundColor:'#2FAE6B',tension:.3,pointRadius:4,order:1}]},
+    options:{plugins:{legend:{labels:{color:'#8A93A1',boxWidth:10}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt0(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#8A93A1'}},y:{grid:{color:'#1E232A'},ticks:{color:'#8A93A1',callback:v=>(v/1000)+'k'}}}}});
+  drawChart('chart-net',{type:'bar',data:{labels:MONTHS.map(k=>k+' 26'),datasets:[{data:MONTHS.map(k=>DATA.summary[k].net_profit),backgroundColor:MONTHS.map(k=>DATA.summary[k].net_profit<1000?'#E5484D':'#2FAE6B'),borderRadius:5}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt0(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#8A93A1'}},y:{grid:{color:'#1E232A'},ticks:{color:'#8A93A1',callback:v=>(v/1000)+'k'}}}}});
+  const avg = MONTHS.reduce((a,k)=>a+DATA.summary[k].revenue,0)/MONTHS.length;
+  drawChart('chart-sales-monthly',{type:'bar',data:{labels:MONTHS.map(k=>k+' 26'),datasets:[
+    {label:'Invoice Value',data:MONTHS.map(k=>DATA.summary[k].revenue),backgroundColor:MONTHS.map(k=>k===cur?'#F7941D':'#7A4E14'),borderRadius:5},
+    {label:'6-month average',type:'line',data:MONTHS.map(()=>avg),borderColor:'#8A93A1',borderDash:[5,5],pointRadius:0}]},
+    options:{plugins:{legend:{labels:{color:'#8A93A1',boxWidth:10}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt0(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{color:'#8A93A1'}},y:{grid:{color:'#1E232A'},ticks:{color:'#8A93A1',callback:v=>(v/1000)+'k'}}}}});
+}
+
+function drawChart(id,cfg){
+  if(charts[id]) charts[id].destroy();
+  cfg.options = Object.assign({responsive:true,maintainAspectRatio:false},cfg.options||{});
+  charts[id] = new Chart(document.getElementById(id),cfg);
+}
+
+/* ---------- Wiring ---------- */
+const sel = document.getElementById('month-select');
+MONTHS.forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=MONTH_FULL[k]+' 2026'; sel.appendChild(o); });
+sel.value = cur;
+sel.addEventListener('change',()=>{ cur=sel.value; renderAll(); });
+
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  n.classList.add('active');
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+n.dataset.tab).classList.add('active');
+  document.getElementById('sidebar').classList.remove('open');
+}));
+
+function renderAll(){
+  renderOverview(); renderSales(); renderProducts(); renderInventory(); renderCalibration(); renderTrendCharts();
+}
+renderAll();
+</script>
+</body>
+</html>

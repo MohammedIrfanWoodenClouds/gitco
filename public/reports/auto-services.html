@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GITCO Auto Services — Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B0D10">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0D10;--surface:#15181D;--surface-2:#1C2127;--surface-3:#222831;--border:#272D35;
+  --orange:#F7941D;--orange-deep:#C9701A;--orange-dim:#3A2A16;
+  --text:#EDEFF2;--text-dim:#8A93A1;--text-faint:#5B6472;
+  --green:#2FAE6B;--green-dim:#16301F;--red:#E5484D;--red-dim:#34191B;--blue:#3D8BFF;--blue-dim:#152238;
+  --radius:14px;--radius-sm:8px;
+  --font-body:'Inter';--font-display:'Oswald';
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font-body),-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,h4,.display{font-family:var(--font-display),Impact,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.03em;}
+a{color:inherit;}
+.app{display:flex;min-height:100vh;}
+.sidebar{width:224px;flex-shrink:0;background:linear-gradient(180deg,#0E1014,#0B0D10 60%);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:22px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 20px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.brand .gear{width:36px;height:36px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#3a3f46,#15171b 75%);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 1px var(--orange-deep) inset;}
+.brand .gear svg{width:19px;height:19px;stroke:var(--orange);}
+.brand .name{font-family:var(--font-display),sans-serif;font-size:15.5px;letter-spacing:.05em;line-height:1.15;}
+.brand .name span{color:var(--orange);}
+.brand .tag{font-size:9px;color:var(--text-faint);letter-spacing:.16em;text-transform:uppercase;margin-top:3px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--radius-sm);color:var(--text-dim);cursor:pointer;font-size:13px;font-weight:600;letter-spacing:.02em;border:1px solid transparent;margin-bottom:4px;transition:background .15s,color .15s;user-select:none;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.8;}
+.nav-item:hover{background:var(--surface);color:var(--text);}
+.nav-item.active{background:var(--orange-dim);color:var(--orange);border-color:#54380F;}
+.nav-item.active svg{opacity:1;}
+.nav-item .warn-dot{margin-left:auto;width:6px;height:6px;border-radius:50%;background:var(--text-faint);}
+.nav-section-label{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.16em;margin:16px 4px 8px;}
+.sidebar-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);font-size:10.5px;color:var(--text-faint);line-height:1.6;}
+.main{flex:1;min-width:0;padding:26px 32px 60px;}
+
+/* Global period bar - persists across all views */
+.global-bar{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.global-bar h1{font-size:22px;margin:0 0 4px;color:var(--text);}
+.global-bar .sub{color:var(--text-dim);font-size:12.5px;margin:0;font-family:var(--font-body);text-transform:none;letter-spacing:0;}
+.period-control{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.period-control label{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.14em;font-weight:700;}
+.period-select{background:var(--surface-2);border:1px solid var(--orange-deep);border-radius:var(--radius-sm);color:var(--text);font-size:13.5px;font-weight:700;padding:10px 34px 10px 14px;cursor:pointer;font-family:var(--font-display);letter-spacing:.03em;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23F7941D' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;}
+.period-select:focus{outline:none;}
+.period-meta{font-size:10.5px;color:var(--text-faint);margin-top:2px;}
+
+.view{display:none;}
+.view.active{display:block;}
+.view-head{margin-bottom:18px;}
+.view-head h2{font-size:18px;margin:0 0 4px;color:var(--text);}
+.view-head .sub{color:var(--text-dim);font-size:12.5px;margin:0;font-family:var(--font-body);text-transform:none;letter-spacing:0;}
+.view-head-row{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px;}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.02em;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);white-space:nowrap;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 17px;position:relative;overflow:hidden;}
+.stat-card .accent{position:absolute;top:0;left:0;width:3px;height:100%;}
+.stat-card .label{font-size:10px;color:var(--text-faint);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;font-weight:700;}
+.stat-card .value{font-family:var(--font-display),sans-serif;font-size:25px;color:var(--text);letter-spacing:.01em;}
+.stat-card .delta{font-size:10.5px;color:var(--text-dim);margin-top:4px;font-family:var(--font-body);text-transform:none;letter-spacing:0;}
+.panel-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:22px;}
+@media(max-width:980px){.panel-grid{grid-template-columns:1fr;} .sidebar{position:relative;height:auto;width:100%;} .app{flex-direction:column;} .global-bar{align-items:flex-start;} .period-control{align-items:flex-start;}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+.panel h3{font-size:12.5px;color:var(--text);margin:0 0 14px;display:flex;justify-content:space-between;align-items:center;}
+.panel h3 .muted{color:var(--text-faint);font-family:var(--font-body);text-transform:none;letter-spacing:0;font-size:11px;font-weight:500;}
+.chart-wrap{position:relative;height:220px;}
+.chart-wrap.tall{height:290px;}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.search{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-size:13px;flex:1;min-width:160px;}
+.search:focus{outline:none;border-color:var(--orange-deep);}
+select.filter{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-dim);font-size:12.5px;padding:9px 10px;cursor:pointer;}
+.cat-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;}
+.cat-dot{width:6px;height:6px;border-radius:50%;}
+.card-list{display:flex;flex-direction:column;gap:9px;}
+.job-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:border-color .15s;}
+.job-card:hover{border-color:#3a4350;}
+.job-card .ticket-id{font-family:var(--font-display),sans-serif;font-size:10.5px;color:var(--text-faint);background:var(--surface-3);padding:3px 8px;border-radius:6px;letter-spacing:.05em;flex-shrink:0;}
+.job-card .jc-main{flex:1;min-width:180px;}
+.job-card .jc-title{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.job-card .jc-sub{font-size:11px;color:var(--text-dim);}
+.job-card .jc-meta{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.status-badge{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:20px;white-space:nowrap;}
+.status-sent{background:var(--blue-dim);color:var(--blue);}
+.status-paid{background:var(--green-dim);color:var(--green);}
+.status-pending{background:var(--orange-dim);color:var(--orange);}
+.status-free{background:var(--surface-3);color:var(--text-dim);}
+.jc-amounts{text-align:right;min-width:78px;}
+.jc-amounts .net{font-family:var(--font-display),sans-serif;font-size:13.5px;}
+.jc-amounts .net.pos{color:var(--green);}
+.jc-amounts .net.zero{color:var(--text-dim);}
+.jc-amounts .lbl{font-size:9px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;}
+.emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:13px;}
+.emp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:17px;}
+.emp-head{display:flex;align-items:center;gap:11px;margin-bottom:13px;}
+.emp-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(145deg,#3a3f46,#1b1e22);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;color:var(--orange);border:1px solid var(--border);flex-shrink:0;}
+.emp-name{font-size:13px;font-weight:700;}
+.emp-role{font-size:10.5px;color:var(--text-faint);}
+.emp-stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.emp-stat .v{font-family:var(--font-display);font-size:16px;color:var(--text);}
+.emp-stat .l{font-size:8.5px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;}
+.emp-bar-track{height:5px;border-radius:4px;background:var(--surface-3);margin-top:11px;overflow:hidden;}
+.emp-bar-fill{height:100%;background:linear-gradient(90deg,var(--orange-deep),var(--orange));}
+table.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.data-table th{text-align:left;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.07em;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.data-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text-dim);}
+table.data-table tr:hover td{background:var(--surface-2);}
+table.data-table td.strong{color:var(--text);font-weight:600;}
+.table-scroll{overflow-x:auto;}
+.rank{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:5px;background:var(--surface-3);color:var(--text-dim);font-size:10px;font-weight:800;margin-right:8px;flex-shrink:0;}
+.overhead-row{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-bottom:1px dashed var(--border);color:var(--text-dim);}
+.overhead-row:last-child{border-bottom:none;}
+.formula-note{font-size:11px;color:var(--text-faint);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 13px;margin-bottom:18px;line-height:1.6;}
+.formula-note code{color:var(--orange);font-family:var(--font-display);letter-spacing:.02em;}
+.banner{display:flex;gap:12px;align-items:flex-start;background:var(--red-dim);border:1px solid #5a2226;border-radius:var(--radius);padding:14px 16px;margin-bottom:20px;font-size:12.5px;color:#f3c6c8;}
+.banner svg{width:18px;height:18px;flex-shrink:0;stroke:var(--red);margin-top:1px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:820px){.two-col{grid-template-columns:1fr;}}
+.insight-list{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+.insight-list li{font-size:12.5px;color:var(--text-dim);line-height:1.55;padding-left:16px;position:relative;}
+.insight-list li::before{content:"";position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:var(--orange);}
+.empty-panel{text-align:center;padding:46px 24px;color:var(--text-faint);background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);}
+.empty-panel svg{width:34px;height:34px;margin-bottom:12px;opacity:.5;stroke:var(--text-faint);}
+.empty-panel .t{font-family:var(--font-display);font-size:14px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.empty-panel .d{font-size:12px;max-width:420px;margin:0 auto;line-height:1.6;}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="brand">
+      <div class="gear"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg></div>
+      <div><div class="name">GITCO <span>AUTO</span></div><div class="tag">Services Dashboard</div></div>
+    </div>
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" data-view="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>Overview</div>
+    <div class="nav-item" data-view="jobs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="1"></rect></svg>Job Cards</div>
+    <div class="nav-item" data-view="employees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>Employees</div>
+    <div class="nav-item" data-view="departments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"></path><path d="M18 17V9M13 17V5M8 17v-4"></path></svg>Departments</div>
+    <div class="nav-section-label">Operations</div>
+    <div class="nav-item" data-view="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg>Inventory</div>
+    <div class="nav-item" data-view="purchase"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1.6"></circle><circle cx="19" cy="21" r="1.6"></circle><path d="M2.5 3h2l2.4 12.2a2 2 0 002 1.6h9.7a2 2 0 002-1.6L22 7H6"></path></svg>Purchase</div>
+    <div class="nav-item" data-view="attendance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>Attendance</div>
+    <div class="sidebar-foot">GITCO Auto Services<br>Use the Period dropdown at the top to switch between June, July and August 2026.<br>Data as of 31-08-2026</div>
+  </div>
+
+  <div class="main">
+
+    <!-- GLOBAL PERIOD BAR (persists across every tab) -->
+    <div class="global-bar">
+      <div>
+        <h1>GITCO Auto Services</h1>
+        <p class="sub">Workshop performance dashboard</p>
+      </div>
+      <div class="period-control">
+        <label for="periodSelect">Period</label>
+        <select id="periodSelect" class="period-select">
+          <option value="2026-08">August 2026</option>
+          <option value="2026-07" selected>July 2026</option>
+          <option value="2026-06">June 2026</option>
+        </select>
+        <div class="period-meta" id="periodMeta"></div>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="view active" id="view-overview">
+      <div class="view-head"><h2>Overview</h2><p class="sub" id="overviewSub"></p></div>
+      <div class="formula-note">Gross Profit = <code>Inv Price/Gross Revenue − Job Expenses</code> &nbsp;·&nbsp; Net Profit = <code>Gross Profit − Overheads</code>. This matches the sign convention used in the workbook's own Net Profit cells (e.g. June's Manager Status Report states a net loss of QAR -266.37, which is exactly Gross Profit − Overheads for June).</div>
+      <div id="lossBanner" class="banner" style="display:none;"></div>
+      <div class="stats-grid" id="statCards"></div>
+      <div class="panel-grid">
+        <div class="panel">
+          <h3 id="trendTitle">Jobs &amp; Revenue by Day</h3>
+          <div class="chart-wrap" id="trendChartWrap"><canvas id="chartTrend"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3 id="mixTitle">Job Status Mix</h3>
+          <div class="chart-wrap" id="mixChartWrap"><canvas id="chartStatus"></canvas></div>
+        </div>
+      </div>
+      <div class="panel-grid">
+        <div class="panel">
+          <h3>Revenue by Employee <span class="muted">QAR</span></h3>
+          <div class="chart-wrap"><canvas id="chartEmpRevenue"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Job Expenses by Department <span class="muted">QAR</span></h3>
+          <div class="chart-wrap"><canvas id="chartDeptExpense"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Overheads (Fixed Costs) <span class="muted" id="overheadSourceNote"></span></h3>
+        <div id="overheadList"></div>
+        <div class="overhead-row" style="margin-top:6px;font-weight:800;color:var(--text)"><span>TOTAL OVERHEADS</span><span id="overheadTotalDisplay"></span></div>
+      </div>
+      <div class="panel" id="juneInsightsPanel" style="display:none;">
+        <h3>Key Insights <span class="muted">from source report</span></h3>
+        <ul class="insight-list" id="juneInsights"></ul>
+      </div>
+    </div>
+
+    <!-- JOB CARDS -->
+    <div class="view" id="view-jobs">
+      <div class="view-head-row">
+        <div class="view-head" style="margin-bottom:0;"><h2>Job Cards</h2><p class="sub" id="jobsSub"></p></div>
+        <span class="pill" id="jobsCountPill"></span>
+      </div>
+      <div id="jobsToolbarWrap">
+        <div class="toolbar">
+          <input class="search" id="jobSearch" placeholder="Search customer, service, vehicle, job ID…">
+          <select class="filter" id="jobCategoryFilter"></select>
+          <select class="filter" id="jobEmployeeFilter"></select>
+          <select class="filter" id="jobStatusFilter"></select>
+        </div>
+        <div class="card-list" id="jobList"></div>
+      </div>
+      <div id="jobsEmptyWrap" style="display:none;"></div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div class="view" id="view-employees">
+      <div class="view-head"><h2>Employee Performance</h2><p class="sub" id="empSub"></p></div>
+      <div class="emp-grid" id="empGrid"></div>
+    </div>
+
+    <!-- DEPARTMENTS -->
+    <div class="view" id="view-departments">
+      <div class="view-head"><h2>Department / Work-Type Performance</h2><p class="sub" id="deptSub"></p></div>
+      <div class="panel">
+        <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Department</th><th>Jobs</th><th>Revenue</th><th>Job Expenses</th><th>Gross Profit</th><th>Margin</th></tr></thead>
+          <tbody id="deptTableBody"></tbody>
+        </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Job Expenses by Department <span class="muted">share of total</span></h3>
+        <div class="chart-wrap tall"><canvas id="chartDeptExpense2"></canvas></div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="view" id="view-inventory">
+      <div class="view-head-row">
+        <div class="view-head" style="margin-bottom:0;"><h2>Inventory</h2><p class="sub">Stock position from the workbook updated 17-08-2026 — 49 line items. Opening stock as of 01-Jan-2026; newly purchased quantities tracked separately. Not tied to the Period selector above.</p></div>
+        <span class="pill" id="invTotalPill"></span>
+      </div>
+      <div class="toolbar">
+        <input class="search" id="invSearch" placeholder="Search item name or code…">
+        <select class="filter" id="invCategoryFilter"></select>
+      </div>
+      <div class="panel">
+        <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Item</th><th>Category</th><th>Code</th><th>Opening</th><th>New Qty</th><th>Sold</th><th>Current Stock</th><th>Cost</th><th>Selling Price</th><th>Stock Value</th><th>Days (Opening)</th><th>Days (New)</th></tr></thead>
+          <tbody id="invTableBody"></tbody>
+        </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Stock Value by Category <span class="muted">QAR</span></h3>
+        <div class="chart-wrap tall"><canvas id="chartInvCat"></canvas></div>
+      </div>
+    </div>
+
+    <!-- PURCHASE -->
+    <div class="view" id="view-purchase">
+      <div class="view-head-row">
+        <div class="view-head" style="margin-bottom:0;"><h2>Purchase</h2><p class="sub">Purchase order plan from the workbook updated 17-08-2026 — new tyre order in transit. Not tied to the Period selector above.</p></div>
+        <span class="pill" id="purTotalPill"></span>
+      </div>
+      <div class="panel">
+        <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Product</th><th>Type / Specification</th><th>Order Qty</th><th>Unit Cost</th><th>Product Value</th><th>Shipping Date</th><th>ETA</th><th>Days to ETA</th><th>Supplier</th><th>Status</th></tr></thead>
+          <tbody id="purTableBody"></tbody>
+        </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Order Summary <span class="muted">QAR</span></h3>
+        <div class="chart-wrap tall"><canvas id="chartPurValue"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="view" id="view-attendance">
+      <div class="view-head"><h2>Attendance</h2><p class="sub" id="attSub"></p></div>
+      <div id="attContentWrap"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ============ DATA (from 31-08-2026 workbook — JULY-2026 + AUG-2026 sheets) ============ */
+
+const JOBS_JULY = [{"sl": 1, "id": "GTC-762", "date": "2026-07-05", "customer": "NAJCO", "vehicle": "BOOM TRUCK \u00b7 195738", "service": "FULL PAINTING", "category": "Painting", "employee": "RAKIB", "income": 1315.0, "expenses": 763.0, "grossProfit": 552.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 2, "id": "GTC-763", "date": "2026-07-06", "customer": "MEDGULF", "vehicle": "BOOM TRUCK \u00b7 52798", "service": "MOTHER BOARD", "category": "Electrical", "employee": "FASALU", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 3, "id": "GTC-764", "date": "2026-07-07", "customer": "OTC", "vehicle": "BOOM TRUCK \u00b7 264851", "service": "LEGTH SETTING", "category": "Calibration", "employee": "FASALU", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 4, "id": "GTC-151", "date": "2026-07-07", "customer": "AJMAL", "vehicle": "N/A", "service": "(unspecified in source)", "category": "Other", "employee": "UNASSIGNED", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 5, "id": "GTC-152", "date": "2026-07-08", "customer": "MR.SHIJN PETER", "vehicle": "PRADO \u00b7 669279", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 150.0, "expenses": 0.0, "grossProfit": 150.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 6, "id": "GTC-153", "date": "2026-07-08", "customer": "GITCO", "vehicle": "XPANDER \u00b7 469101", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 7, "id": "GTC-765", "date": "2026-07-09", "customer": "EMCO", "vehicle": "SISSOR LIFT \u00b7 5", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 5800.0, "expenses": 3130.0, "grossProfit": 2670.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 8, "id": "GTC-766", "date": "2026-07-09", "customer": "OTC", "vehicle": "BOOM TRUCK", "service": "LENGTH SETTING", "category": "Calibration", "employee": "UNASSIGNED", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 9, "id": "GTC-767", "date": "2026-07-09", "customer": "TROY ENGINEERING", "vehicle": "MINI BUS \u00b7 307943", "service": "ENGINE OIL SERIVCE", "category": "Mechanical", "employee": "KISHORE", "income": 204.0, "expenses": 100.38, "grossProfit": 103.62, "status": "Sent", "remark": "", "spareProfit": 53.53}, {"sl": 10, "id": "GTC-768", "date": "2026-07-09", "customer": "BEST LINE", "vehicle": "FORKLIFT \u00b7 78114", "service": "ENGINE OIL SERIVCE", "category": "Mechanical", "employee": "KISHORE/WASIK", "income": 450.0, "expenses": 170.38, "grossProfit": 279.62, "status": "Sent", "remark": "", "spareProfit": 53.53}, {"sl": 11, "id": "GTC-769", "date": "2026-07-11", "customer": "TROY ENGINEERING", "vehicle": "BOOM TRUCK \u00b7 288318", "service": "ENGINE OIL SERIVCE", "category": "Mechanical", "employee": "KISHORE/WASIK", "income": 316.0, "expenses": 179.72, "grossProfit": 136.28, "status": "Sent", "remark": "", "spareProfit": 61.18}, {"sl": 12, "id": "GTC-770", "date": "2026-07-11", "customer": "GOLDEN ROCK", "vehicle": "BOOM TRUCK \u00b7 70131", "service": "CALIBRATION", "category": "Calibration", "employee": "FASALU", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 13, "id": "GTC-771", "date": "2026-07-12", "customer": "ESNAD", "vehicle": "BOOM TRUCK", "service": "FABRICATION", "category": "Fabrication", "employee": "ARIF KISOR", "income": 250.0, "expenses": 150.0, "grossProfit": 100.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 14, "id": "GTC-772", "date": "2026-07-12", "customer": "KHALID PROJECT", "vehicle": "BOOM TRUCK \u00b7 318886", "service": "DISPLAY CHANGE", "category": "Electrical", "employee": "FASALU", "income": 100.0, "expenses": 0.0, "grossProfit": 100.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 15, "id": "GTC-155", "date": "2026-07-13", "customer": "WALK-IN", "vehicle": "01 Ton PICKUP \u00b7 129150", "service": "SUSPENSION", "category": "Mechanical", "employee": "JAMEEL", "income": 1785.0, "expenses": 1285.0, "grossProfit": 500.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 16, "id": "GTC-156", "date": "2026-07-13", "customer": "NASEEB HASSAN", "vehicle": "FJ \u00b7 732950", "service": "DENTING AND PAINTINF", "category": "Painting", "employee": "RAKIB", "income": 1245.0, "expenses": 780.0, "grossProfit": 465.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 17, "id": "GTC-157", "date": "2026-07-13", "customer": "MR.SHAREEF C/C SHAIJITH", "vehicle": "RAM \u00b7 122962", "service": "BODY POLISHING AND PAINT TOUCH UP", "category": "Painting", "employee": "RAKIB", "income": 300.0, "expenses": 30.0, "grossProfit": 270.0, "status": "Paid", "remark": "", "spareProfit": 0.0}, {"sl": 18, "id": "GTC-158", "date": "2026-07-14", "customer": "AL WAHA FOOD TRADING", "vehicle": "Reg 341436", "service": "OIL SERVICE", "category": "Mechanical", "employee": "JAMEEL", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Paid", "remark": "", "spareProfit": 0.0}, {"sl": 19, "id": "GTC-773", "date": "2026-07-14", "customer": "CARMEL", "vehicle": "BOOM TRUCK \u00b7 239624", "service": "FABRICATION", "category": "Fabrication", "employee": "ARIF KISOR", "income": 480.0, "expenses": 50.0, "grossProfit": 430.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 20, "id": "GTC-774", "date": "2026-07-14", "customer": "OTC", "vehicle": "BOOM TRUCK \u00b7 305163", "service": "CALIBRATION", "category": "Calibration", "employee": "FASALU", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 21, "id": "GTC-775", "date": "2026-07-14", "customer": "FASTTRACK", "vehicle": "TRAILER \u00b7 77412", "service": "FABRICATION", "category": "Fabrication", "employee": "AMAL", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 22, "id": "GTC-776", "date": "2026-07-15", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 206640", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 150.0, "expenses": 0.0, "grossProfit": 150.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 23, "id": "GTC-777", "date": "2026-07-15", "customer": "MEDGULF", "vehicle": "BOOM TRUCK \u00b7 51665", "service": "SLI", "category": "Electrical", "employee": "FASALU", "income": 100.0, "expenses": 0.0, "grossProfit": 100.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 24, "id": "GTC-159", "date": "2026-07-15", "customer": "DOHA FOOD SERVICE", "vehicle": "03 TON PICKUP \u00b7 75066", "service": "FABRICATION", "category": "Fabrication", "employee": "AMAL", "income": 120.0, "expenses": 0.0, "grossProfit": 120.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 25, "id": "GTC-160", "date": "2026-07-16", "customer": "MR ZAIN", "vehicle": "LC200 \u00b7 303840", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 320.0, "expenses": 170.0, "grossProfit": 150.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 26, "id": "GTC-161", "date": "2026-07-16", "customer": "GITCO", "vehicle": "LC200 \u00b7 281044", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 27, "id": "GTC-778", "date": "2026-07-17", "customer": "AL ANEES", "vehicle": "BOOM TRUCK \u00b7 314039", "service": "SLI", "category": "Electrical", "employee": "FASALU", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 28, "id": "GTC-779", "date": "2026-07-17", "customer": "MEDGULF", "vehicle": "BOOM TRUCK \u00b7 148652", "service": "SLI", "category": "Electrical", "employee": "FASALU", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 29, "id": "GTC-780", "date": "2026-07-18", "customer": "ENOVA", "vehicle": "BOOM TRUCK \u00b7 62899", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 30, "id": "GTC-781", "date": "2026-07-18", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 156341", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 400.0, "expenses": 0.0, "grossProfit": 400.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 31, "id": "GTC-782", "date": "2026-07-18", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 338210", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 402.0, "expenses": 234.78, "grossProfit": 167.22, "status": "Sent", "remark": "", "spareProfit": 117.22}, {"sl": 32, "id": "GTC-783", "date": "2026-07-19", "customer": "JISHAM", "vehicle": "FORKLIFT \u00b7 77332", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 600.0, "expenses": 0.0, "grossProfit": 600.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 33, "id": "GTC-784", "date": "2026-07-19", "customer": "BARAKHA", "vehicle": "FORKLIFT \u00b7 77922", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 226.0, "expenses": 117.39, "grossProfit": 108.61, "status": "Sent", "remark": "", "spareProfit": 58.61}, {"sl": 34, "id": "GTC-162", "date": "2026-07-19", "customer": "GITCO", "vehicle": "01 Ton PICKUP \u00b7 155826", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 102.0, "expenses": 51.36, "grossProfit": 50.64, "status": "Sent", "remark": "", "spareProfit": 25.64}, {"sl": 35, "id": "GTC-163", "date": "2026-07-18", "customer": "GITCO", "vehicle": "VELOZ \u00b7 925278", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 36, "id": "GTC-785", "date": "2026-07-19", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 304451", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 110.0, "expenses": 73.37, "grossProfit": 36.63, "status": "Sent", "remark": "", "spareProfit": 36.63}, {"sl": 37, "id": "GTC-164", "date": "2026-07-21", "customer": "SHABEER SHAMSUDHEEN", "vehicle": "LC200 \u00b7 640998", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "AMAL", "income": 60.0, "expenses": 60.0, "grossProfit": 0.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 38, "id": "GTC-786", "date": "2026-07-22", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 248250", "service": "CALIBRATION", "category": "Calibration", "employee": "FASALU", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 39, "id": "GTC-787", "date": "2026-07-22", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 116743", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 502.0, "expenses": 334.78, "grossProfit": 167.22, "status": "Sent", "remark": "", "spareProfit": 117.22}, {"sl": 40, "id": "GTC-788", "date": "2026-07-22", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 206640", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 88.0, "expenses": 20.76, "grossProfit": 67.24, "status": "Sent", "remark": "", "spareProfit": 7.24}, {"sl": 41, "id": "GTC-789", "date": "2026-07-22", "customer": "SHAIJ", "vehicle": "TAIL \u00b7 6830", "service": "ELECTRICAL", "category": "Electrical", "employee": "WASIK", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 42, "id": "GTC-790", "date": "2026-07-22", "customer": "ESNAD", "vehicle": "BOOM TRUCK \u00b7 170399", "service": "CALIBRATION", "category": "Calibration", "employee": "FASALU", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 43, "id": "GTC-791", "date": "2026-07-22", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 316986", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 20.0, "expenses": 0.0, "grossProfit": 20.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 44, "id": "GTC-165", "date": "2026-07-22", "customer": "WALK-IN", "vehicle": "KIA \u00b7 492860", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 400.0, "expenses": 200.0, "grossProfit": 200.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 45, "id": "GTC-792", "date": "2026-07-23", "customer": "JAIDAH", "vehicle": "BOOM TRUCK \u00b7 3TT048321", "service": "SLI", "category": "Electrical", "employee": "FASALU", "income": 2000.0, "expenses": 0.0, "grossProfit": 2000.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 46, "id": "GTC-166", "date": "2026-07-23", "customer": "WALK-IN", "vehicle": "ACCENT \u00b7 613149", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "UNASSIGNED", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 47, "id": "GTC-167", "date": "2026-07-23", "customer": "AL WAHA FOOD TRADING", "vehicle": "03 TON PICKUP", "service": "MECHANICAL", "category": "Mechanical", "employee": "CYRIL", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 48, "id": "GTC-168", "date": "2026-07-23", "customer": "MR VYSHAKH", "vehicle": "MINI COOPER \u00b7 593410", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 49, "id": "GTC-793", "date": "2026-07-23", "customer": "BARAKHA", "vehicle": "FORKLIFT \u00b7 74968", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 1000.0, "expenses": 500.0, "grossProfit": 500.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 50, "id": "GTC-794", "date": "2026-07-23", "customer": "ESNAD", "vehicle": "BOOM TRUCK \u00b7 332990", "service": "SLI", "category": "Electrical", "employee": "FASALU", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 51, "id": "GTC-795", "date": "2026-07-23", "customer": "WALK-IN", "vehicle": "N/A", "service": "(unspecified in source)", "category": "Other", "employee": "UNASSIGNED", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 52, "id": "GTC-796", "date": "2026-07-23", "customer": "AG MIDDLE EAST", "vehicle": "BOOM TRUCK \u00b7 54716", "service": "CALIBRATION", "category": "Calibration", "employee": "FASALU", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 53, "id": "GTC-169", "date": "2026-07-23", "customer": "CASH", "vehicle": "LC200", "service": "SHOCK", "category": "Mechanical", "employee": "AMAL", "income": 1100.0, "expenses": 500.0, "grossProfit": 600.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 54, "id": "GTC-170", "date": "2026-07-23", "customer": "IABS", "vehicle": "WIRE ROPE", "service": "FABRICATION", "category": "Fabrication", "employee": "KISHORE", "income": 150.0, "expenses": 0.0, "grossProfit": 150.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 55, "id": "GTC-171", "date": "2026-07-25", "customer": "DOHA FOOD SERVICE", "vehicle": "03 TON PICKUP \u00b7 316511", "service": "MECHANICAL", "category": "Mechanical", "employee": "JAMEEL", "income": 290.0, "expenses": 255.0, "grossProfit": 35.0, "status": "Paid", "remark": "", "spareProfit": 0.0}, {"sl": 56, "id": "GTC-797", "date": "2026-07-28", "customer": "GITCO", "vehicle": "TRAILER \u00b7 158264", "service": "MECHANICAL", "category": "Mechanical", "employee": "KISHORE", "income": 457.0, "expenses": 271.46, "grossProfit": 185.54, "status": "Sent", "remark": "", "spareProfit": 135.54}, {"sl": 57, "id": "GTC-798", "date": "2026-07-29", "customer": "GLOBEL SOURCE", "vehicle": "BOOM TRUCK \u00b7 39080", "service": "CALIBRATION", "category": "Calibration", "employee": "KISHORE", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 58, "id": "GTC-799", "date": "2026-07-29", "customer": "NAJCO", "vehicle": "BOOM TRUCK \u00b7 124179", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 350.0, "expenses": 0.0, "grossProfit": 350.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 59, "id": "GTC-800", "date": "2026-07-29", "customer": "WALK-IN", "vehicle": "WIRE ROPE", "service": "FABRICATION", "category": "Fabrication", "employee": "KISHORE", "income": 20.0, "expenses": 0.0, "grossProfit": 20.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 60, "id": "GTC-172", "date": "2026-07-30", "customer": "SHIHAB A/C", "vehicle": "SUNNY \u00b7 668706", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 100.0, "expenses": 0.0, "grossProfit": 100.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 61, "id": "GTC-173", "date": "2026-07-30", "customer": "MR ABDU REHMAN", "vehicle": "DODGE \u00b7 713824", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 550.0, "expenses": 335.0, "grossProfit": 215.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 62, "id": "GTC-174", "date": "2026-07-30", "customer": "SAAD AL KAABI TRADING", "vehicle": "FOTON \u00b7 143831", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 260.0, "expenses": 215.0, "grossProfit": 45.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 63, "id": "GTC-801", "date": "2026-07-30", "customer": "OTC", "vehicle": "BOOM TRUCK \u00b7 45369", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 64, "id": "GTC-802", "date": "2026-07-30", "customer": "GITCO", "vehicle": "TRAILER \u00b7 157847", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 20.0, "expenses": 0.0, "grossProfit": 20.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 65, "id": "GTC-803", "date": "2026-07-30", "customer": "GITCO", "vehicle": "FORKLIFT \u00b7 38537", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 200.0, "expenses": 0.0, "grossProfit": 200.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 66, "id": "GTC-804", "date": "2026-07-30", "customer": "FASTTRACK", "vehicle": "TRAILER \u00b7 155366", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 114.0, "expenses": 10.38, "grossProfit": 103.62, "status": "Sent", "remark": "", "spareProfit": 3.62}, {"sl": 67, "id": "GTC-806", "date": "2026-07-30", "customer": "ENOVA", "vehicle": "BOOM TRUCK \u00b7 62899", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 1600.0, "expenses": 540.0, "grossProfit": 1060.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 68, "id": "GTC-809", "date": "2026-07-31", "customer": "BARAKA 03", "vehicle": "BOOM TRUCK \u00b7 310319", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 506.0, "expenses": 278.8, "grossProfit": 227.2, "status": "Sent", "remark": "", "spareProfit": 177.2}, {"sl": 69, "id": "GTC-810", "date": "2026-07-30", "customer": "ENOVA", "vehicle": "BOOM TRUCK \u00b7 62899", "service": "MECHANICAL", "category": "Mechanical", "employee": "AMAL", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 70, "id": "GTC-811", "date": "2026-07-30", "customer": "DOMASCO", "vehicle": "FORKLIFT", "service": "SLI", "category": "Electrical", "employee": "AMAL", "income": 1000.0, "expenses": 0.0, "grossProfit": 1000.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 71, "id": "GTC-812", "date": "2026-07-31", "customer": "INTEGRATED TECHNOLOGYS SA", "vehicle": "BOOM TRUCK", "service": "SLI", "category": "Electrical", "employee": "AMAL", "income": 600.0, "expenses": 0.0, "grossProfit": 600.0, "status": "Sent", "remark": "", "spareProfit": 0.0}];
+const JOBS_AUG = [{"sl": 1, "id": "GTC-805", "date": "2026-08-01", "customer": "WIRBU", "vehicle": "WIRE ROPE", "service": "FABRICATION", "category": "Fabrication", "employee": "KISHORE", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 2, "id": "GTC-807", "date": "2026-08-02", "customer": "MED GULF", "vehicle": "BOOM TRUCK \u00b7 20671", "service": "CALIBRATION", "category": "Calibration", "employee": "AMAL", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 3, "id": "GTC-808", "date": "2026-08-02", "customer": "OTC", "vehicle": "BOOM TRUCK \u00b7 304471", "service": "SLI", "category": "Electrical", "employee": "UNASSIGNED", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 4, "id": "GTC-813", "date": "2026-08-03", "customer": "ESNAD", "vehicle": "BOOM TRUCK \u00b7 58155", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 5, "id": "GTC-176", "date": "2026-08-03", "customer": "GITCO", "vehicle": "MITSUBHISHI \u00b7 469101", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 6, "id": "GTC-814", "date": "2026-08-03", "customer": "OTC", "vehicle": "BOOM TRUCK \u00b7 165908", "service": "SLI", "category": "Electrical", "employee": "KISHORE", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 7, "id": "GTC-815", "date": "2026-08-05", "customer": "WIRBU", "vehicle": "WIRE ROPE", "service": "FABRICATION", "category": "Fabrication", "employee": "KISHORE", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 8, "id": "GTC-816", "date": "2026-08-06", "customer": "JAIDAH", "vehicle": "BOOM TRUCK \u00b7 48288-VIN", "service": "SLI", "category": "Electrical", "employee": "AMAL", "income": 2000.0, "expenses": 0.0, "grossProfit": 2000.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 9, "id": "GTC-817", "date": "2026-08-06", "customer": "SAMSUNG", "vehicle": "BOOM TRUCK \u00b7 37916", "service": "CALIBRATION", "category": "Calibration", "employee": "WASIK", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 10, "id": "GTC-818", "date": "2026-08-06", "customer": "OTC", "vehicle": "BOOM TRUCK \u00b7 307145", "service": "SLI", "category": "Electrical", "employee": "AMAL", "income": 100.0, "expenses": 0.0, "grossProfit": 100.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 11, "id": "GTC-819", "date": "2026-08-06", "customer": "DIME", "vehicle": "BOOM TRUCK \u00b7 326996", "service": "CALIBRATION", "category": "Calibration", "employee": "AMAL", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 12, "id": "GTC-820", "date": "2026-08-08", "customer": "WINSTAR", "vehicle": "BOOM TRUCK \u00b7 237114", "service": "CALIBRATION", "category": "Calibration", "employee": "WASIK", "income": 450.0, "expenses": 45.0, "grossProfit": 405.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 13, "id": "GTC-821", "date": "2026-08-08", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 213840", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 434.0, "expenses": 234.78, "grossProfit": 199.22, "status": "Sent", "remark": "", "spareProfit": 149.22}, {"sl": 14, "id": "GTC-822", "date": "2026-08-08", "customer": "GITCO", "vehicle": "TRAILER \u00b7 157847", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 506.0, "expenses": 278.8, "grossProfit": 227.2, "status": "Sent", "remark": "", "spareProfit": 177.2}, {"sl": 15, "id": "GTC-823", "date": "2026-08-08", "customer": "FAST TRACK", "vehicle": "TRAILER \u00b7 311474", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 506.0, "expenses": 278.8, "grossProfit": 227.2, "status": "Sent", "remark": "", "spareProfit": 177.2}, {"sl": 16, "id": "GTC-177", "date": "2026-08-09", "customer": "OTOMOTO", "vehicle": "AUDI \u00b7 240539", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 300.0, "expenses": 100.0, "grossProfit": 200.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 17, "id": "GTC-178", "date": "2026-08-09", "customer": "MR SHABEER SHAMSUDHEEN", "vehicle": "LC 200 \u00b7 640998", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 300.0, "expenses": 200.0, "grossProfit": 100.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 18, "id": "GTC-824", "date": "2026-08-09", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 304451", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 534.0, "expenses": 299.56, "grossProfit": 234.44, "status": "Sent", "remark": "", "spareProfit": 184.44}, {"sl": 19, "id": "GTC-179", "date": "2026-08-09", "customer": "AL WAHA", "vehicle": "NISSAN URVAN \u00b7 109743", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 130.0, "expenses": 105.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 20, "id": "GTC-180", "date": "2026-08-09", "customer": "MR FAHEEM", "vehicle": "DODGE RAM \u00b7 175273", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 1860.0, "expenses": 1360.0, "grossProfit": 500.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 21, "id": "GTC-825", "date": "2026-08-09", "customer": "GITCO", "vehicle": "FORKLIFT \u00b7 69753", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 366.0, "expenses": 132.06, "grossProfit": 233.94, "status": "Sent", "remark": "", "spareProfit": 83.94}, {"sl": 22, "id": "GTC-181", "date": "2026-08-10", "customer": "VYSHAKH", "vehicle": "MINI COOPER \u00b7 593410", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "RAKIB", "income": 230.0, "expenses": 180.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 23, "id": "GTC-182", "date": "2026-08-10", "customer": "ASHFAL", "vehicle": "LC 200 \u00b7 885767", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 890.0, "expenses": 590.0, "grossProfit": 300.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 24, "id": "GTC-183", "date": "2026-08-10", "customer": "WALK-IN", "vehicle": "N/A", "service": "(unspecified in source)", "category": "Other", "employee": "UNASSIGNED", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 25, "id": "GTC-826", "date": "2026-08-11", "customer": "ESNAD", "vehicle": "BOOM TRUCK \u00b7 326766", "service": "SLI", "category": "Electrical", "employee": "AMAL", "income": 150.0, "expenses": 0.0, "grossProfit": 150.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 26, "id": "GTC-184", "date": "2026-08-11", "customer": "DOHA FOOD", "vehicle": "HUNDAI \u00b7 116076", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "AMAL", "income": 140.0, "expenses": 110.0, "grossProfit": 30.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 27, "id": "GTC-185", "date": "2026-08-11", "customer": "GITCO", "vehicle": "ISUZU PICK UP \u00b7 155826", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 109.0, "expenses": 51.36, "grossProfit": 57.65, "status": "Sent", "remark": "", "spareProfit": 32.64}, {"sl": 28, "id": "GTC-827", "date": "2026-08-11", "customer": "GITCO", "vehicle": "FORKLIFT \u00b7 74968", "service": "MECHANICAL", "category": "Mechanical", "employee": "KISHORE", "income": 304.0, "expenses": 124.76, "grossProfit": 179.27, "status": "Sent", "remark": "", "spareProfit": 79.27}, {"sl": 29, "id": "GTC-828", "date": "2026-08-13", "customer": "IABA", "vehicle": "WIRE ROPE", "service": "FABRICATION", "category": "Fabrication", "employee": "KISHORE", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 30, "id": "GTC-829", "date": "2026-08-15", "customer": "AL ANIS", "vehicle": "BOOM TRUCK \u00b7 314039", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 31, "id": "GTC-830", "date": "2026-08-15", "customer": "GITCO", "vehicle": "FORKLIFT \u00b7 69753", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 150.0, "expenses": 50.0, "grossProfit": 100.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 32, "id": "GTC-831", "date": "2026-08-15", "customer": "BARAKHA", "vehicle": "TRAILER \u00b7 77412", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 33, "id": "GTC-832", "date": "2026-08-15", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 338210", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 50.0, "expenses": 0.0, "grossProfit": 50.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 34, "id": "GTC-186", "date": "2026-08-15", "customer": "AJAS", "vehicle": "WRANGLER \u00b7 655094", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 300.0, "expenses": 0.0, "grossProfit": 300.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 35, "id": "GTC-833", "date": "2026-08-16", "customer": "SAAD AL KAABI", "vehicle": "FOTON \u00b7 14937", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 258.0, "expenses": 142.72, "grossProfit": 115.28, "status": "Sent", "remark": "", "spareProfit": 65.28}, {"sl": 36, "id": "GTC-834", "date": "2026-08-16", "customer": "OTC", "vehicle": "BOOM TRUCK \u00b7 166725", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "FREE", "spareProfit": 0.0}, {"sl": 37, "id": "GTC-835", "date": "2026-08-17", "customer": "IABA", "vehicle": "WIRE ROPE", "service": "FABRICATION", "category": "Fabrication", "employee": "KISHORE", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 38, "id": "GTC-187", "date": "2026-08-17", "customer": "PRAVEEN", "vehicle": "BMW \u00b7 103072", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 1280.0, "expenses": 780.0, "grossProfit": 500.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 39, "id": "GTC-188", "date": "2026-08-17", "customer": "AL WAHA", "vehicle": "SWIFT \u00b7 364726", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 40, "id": "GTC-836", "date": "2026-08-17", "customer": "ENOVA", "vehicle": "BOOM TRUCK \u00b7 62899", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 41, "id": "GTC-189", "date": "2026-08-17", "customer": "AL WAHA", "vehicle": "FUSO \u00b7 301558", "service": "MECHANICAL", "category": "Mechanical", "employee": "AMAL", "income": 2380.0, "expenses": 2130.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 42, "id": "GTC-190", "date": "2026-08-18", "customer": "AL WAHA", "vehicle": "FUSO \u00b7 301558", "service": "MECHANICAL", "category": "Mechanical", "employee": "JAMEEL", "income": 230.0, "expenses": 205.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 43, "id": "GTC-838", "date": "2026-08-18", "customer": "GITCO", "vehicle": "FORKLIFT \u00b7 80034", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 218.0, "expenses": 103.52, "grossProfit": 114.48, "status": "Sent", "remark": "", "spareProfit": 64.48}, {"sl": 44, "id": "GTC-837", "date": "2026-08-18", "customer": "Q CON", "vehicle": "BOOM TRUCK \u00b7 319011", "service": "CALIBRATION", "category": "Calibration", "employee": "WASIK", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 45, "id": "GTC-839", "date": "2026-08-18", "customer": "GITCO", "vehicle": "TELEHANDLER \u00b7 67908", "service": "MECHANICAL", "category": "Mechanical", "employee": "MANOJ", "income": 254.0, "expenses": 125.7, "grossProfit": 128.3, "status": "Sent", "remark": "", "spareProfit": 78.3}, {"sl": 46, "id": "GTC-840", "date": "2026-08-19", "customer": "MEDITTARIAN", "vehicle": "BOOM TRUCK \u00b7 303768", "service": "CALIBRATION", "category": "Calibration", "employee": "AMAL", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 47, "id": "GTC-841", "date": "2026-08-19", "customer": "NAJCO", "vehicle": "BOOM TRUCK \u00b7 124179", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 2206.0, "expenses": 1036.0, "grossProfit": 1170.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 48, "id": "GTC-191", "date": "2026-08-20", "customer": "GITCO", "vehicle": "XPANDER \u00b7 469101", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 25.0, "expenses": 0.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 49, "id": "GTC-192", "date": "2026-08-20", "customer": "AL WAHA", "vehicle": "FUSO \u00b7 231150", "service": "MECHANICAL", "category": "Mechanical", "employee": "JAMEEL", "income": 40.0, "expenses": 15.0, "grossProfit": 25.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 50, "id": "GTC-842", "date": "2026-08-20", "customer": "MADHEENA", "vehicle": "BOOM TRUCK \u00b7 113059", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 51, "id": "GTC-843", "date": "2026-08-20", "customer": "BIG MECHINERY", "vehicle": "BOOM TRUCK \u00b7 215540", "service": "SLI", "category": "Electrical", "employee": "AMAL", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 52, "id": "GTC-844", "date": "2026-08-20", "customer": "SAFA TRADING", "vehicle": "BOOM TRUCK \u00b7 310126", "service": "CALIBRATION", "category": "Calibration", "employee": "WASIK", "income": 275.0, "expenses": 0.0, "grossProfit": 275.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 53, "id": "GTC-845", "date": "2026-08-20", "customer": "FAST TRACK", "vehicle": "HEAD \u00b7 311471", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 1079.0, "expenses": 603.58, "grossProfit": 475.42, "status": "Sent", "remark": "", "spareProfit": 170.42}, {"sl": 54, "id": "GTC-193", "date": "2026-08-23", "customer": "DOHA FOOD", "vehicle": "SUNNY \u00b7 19264", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 115.0, "expenses": 85.0, "grossProfit": 30.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 55, "id": "GTC-194", "date": "2026-08-23", "customer": "GITCO", "vehicle": "VELOZ \u00b7 925278", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 75.0, "expenses": 0.0, "grossProfit": 75.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 56, "id": "GTC-195", "date": "2026-08-24", "customer": "ASHFAL", "vehicle": "LC 200 \u00b7 885767", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 500.0, "expenses": 247.5, "grossProfit": 252.5, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 57, "id": "GTC-196", "date": "2026-08-25", "customer": "MR NAHEEM RAHEEM", "vehicle": "AUDI \u00b7 351774", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "CYRIL", "income": 1307.0, "expenses": 957.0, "grossProfit": 350.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 58, "id": "GTC-846", "date": "2026-08-24", "customer": "GITCO", "vehicle": "TRAILER \u00b7 157847", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 150.0, "expenses": 0.0, "grossProfit": 150.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 59, "id": "GTC-847", "date": "2026-08-24", "customer": "SAFA TRADING", "vehicle": "BOOM TRUCK \u00b7 181682", "service": "SLI", "category": "Electrical", "employee": "WASIK", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 60, "id": "GTC-848", "date": "2026-08-26", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 206640", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 61, "id": "GTC-197", "date": "2026-08-27", "customer": "MR HABIB", "vehicle": "MAZDA \u00b7 810936", "service": "PAINTING", "category": "Painting", "employee": "RAKIB", "income": 600.0, "expenses": 260.0, "grossProfit": 340.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 62, "id": "GTC-198", "date": "2026-08-27", "customer": "MR NASEEB HASSAN", "vehicle": "FJ \u00b7 732950", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 355.0, "expenses": 285.0, "grossProfit": 70.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 63, "id": "GTC-199", "date": "2026-08-27", "customer": "DOHA FOOD", "vehicle": "GENESIS \u00b7 116076", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 1655.0, "expenses": 1305.0, "grossProfit": 350.0, "status": "Sent", "remark": "", "spareProfit": 0.0}, {"sl": 64, "id": "GTC-849", "date": "2026-08-27", "customer": "MR TAHIR", "vehicle": "BOOM TRUCK \u00b7 260425", "service": "MECHANICAL", "category": "Mechanical", "employee": "UNASSIGNED", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 65, "id": "GTC-850", "date": "2026-08-29", "customer": "GOLDEN HYDRUALIC", "vehicle": "BOOM TRUCK \u00b7 82392", "service": "CALIBRATION", "category": "Calibration", "employee": "WASIK", "income": 250.0, "expenses": 0.0, "grossProfit": 250.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 66, "id": "GTC-851", "date": "2026-08-27", "customer": "GITCO", "vehicle": "HEAD \u00b7 148596", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 506.0, "expenses": 280.97, "grossProfit": 225.03, "status": "Sent", "remark": "", "spareProfit": 175.03}, {"sl": 67, "id": "GTC-852", "date": "2026-08-29", "customer": "FAST TRACK", "vehicle": "HEAD \u00b7 156276", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 616.0, "expenses": 390.97, "grossProfit": 225.03, "status": "Sent", "remark": "", "spareProfit": 175.03}, {"sl": 68, "id": "GTC-200", "date": "2026-08-29", "customer": "SAAD AL KAABI", "vehicle": "FOTON \u00b7 143831", "service": "MECHANICAL LIGHT", "category": "Mechanical", "employee": "JAMEEL", "income": 220.0, "expenses": 151.97, "grossProfit": 68.03, "status": "Sent", "remark": "", "spareProfit": 23.03}, {"sl": 69, "id": "GTC-853", "date": "2026-08-29", "customer": "FAST TRACK", "vehicle": "HEAD \u00b7 311474", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 140.0, "expenses": 73.94, "grossProfit": 66.06, "status": "Sent", "remark": "", "spareProfit": 46.06}, {"sl": 70, "id": "GTC-854", "date": "2026-08-29", "customer": "MR TAHIR", "vehicle": "HEAD \u00b7 171808", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 71, "id": "GTC-855", "date": "2026-08-29", "customer": "GITCO", "vehicle": "BOOM TRUCK \u00b7 316986", "service": "MECHANICAL", "category": "Mechanical", "employee": "WASIK", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Pending", "remark": "", "spareProfit": 0.0}, {"sl": 72, "id": "GTC-856", "date": "2026-08-29", "customer": "SAFE WORLD", "vehicle": "BOOM TRUCK \u00b7 208845", "service": "SLI", "category": "Electrical", "employee": "KISHORE", "income": 0.0, "expenses": 0.0, "grossProfit": 0.0, "status": "Sent", "remark": "FREE", "spareProfit": 0.0}, {"sl": 73, "id": "GTC-N/A", "date": "2026-08-29", "customer": "CRANE", "vehicle": "N/A", "service": "MECHANICAL", "category": "Mechanical", "employee": "UNASSIGNED", "income": 8000.0, "expenses": 0.0, "grossProfit": 8000.0, "status": "Pending", "remark": "", "spareProfit": 0.0}];
+const OVERHEADS_JULY = {"items": [{"item": "Rental Store", "amount": 4000.0}, {"item": "Rental Amal", "amount": 750.0}, {"item": "Salary Jameel", "amount": 2300.0}, {"item": "Salary Arif", "amount": 1450.0}, {"item": "Salary Cyril", "amount": 2500.0}, {"item": "Salary Amal", "amount": 4200.0}, {"item": "Salary Rakeeb", "amount": 2000.0}, {"item": "OT Jameel", "amount": 200.0}, {"item": "OT Arif", "amount": 200.0}, {"item": "OT Cyril", "amount": 200.0}, {"item": "OT Amal", "amount": 400.0}, {"item": "OT Rakeeb", "amount": 200.0}, {"item": "Grrage common Expenses", "amount": 4000.0}, {"item": "Fuel Amal", "amount": 810.31}, {"item": "Vehicle Expenses Amal", "amount": 200.0}, {"item": "Miscellaneous Expenses", "amount": 0.0}, {"item": "Telephone", "amount": 35.0}], "total": 23445.31};
+const OVERHEADS_AUG = {"items": [{"item": "Rental Store", "amount": 4000.0}, {"item": "Rental Amal", "amount": 750.0}, {"item": "Salary Jameel", "amount": 2300.0}, {"item": "Salary Arif", "amount": 1450.0}, {"item": "Salary Cyril", "amount": 2500.0}, {"item": "Salary Amal", "amount": 4200.0}, {"item": "Salary Rakeeb", "amount": 2000.0}, {"item": "OT Jameel", "amount": 82.0}, {"item": "OT Arif", "amount": 78.0}, {"item": "OT Cyril", "amount": 156.0}, {"item": "OT Amal", "amount": 400.0}, {"item": "OT Rakeeb", "amount": 200.0}, {"item": "Grrage common Expenses", "amount": 4000.0}, {"item": "Fuel Amal", "amount": 810.31}, {"item": "Vehicle Expenses Amal", "amount": 200.0}, {"item": "Miscellaneous Expenses", "amount": 0.0}, {"item": "Telephone", "amount": 35.0}], "total": 23161.31};
+let JOBS = JOBS_JULY;
+let OVERHEADS = OVERHEADS_JULY;
+function syncPeriodData(){
+  if(currentPeriod==="2026-07"){ JOBS = JOBS_JULY; OVERHEADS = OVERHEADS_JULY; }
+  else if(currentPeriod==="2026-08"){ JOBS = JOBS_AUG; OVERHEADS = OVERHEADS_AUG; }
+  else { JOBS = []; OVERHEADS = {items:[], total:0}; }
+}
+const INVENTORY = [{"id": "INV-1", "name": "Side Marker Light", "code": "SML001", "category": "General", "sellingPrice": 5.19, "cost": 5.19, "opening": 67, "newQty": 0, "soldQty": 0, "qty": 67, "unit": "Nos", "stockValue": 347.73, "newDate": ""}, {"id": "INV-2", "name": "Dash Camera Wolfbox G900Pro", "code": "DCM001", "category": "Cameras", "sellingPrice": 1250, "cost": 752.79, "opening": 1, "newQty": 3, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 3011.16, "newDate": "2026-08-13"}, {"id": "INV-3", "name": "Dash Camera Wolfbox G850Pro", "code": "DCM002", "category": "Cameras", "sellingPrice": 0, "cost": 0, "opening": 0, "newQty": 2, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 0, "newDate": "2026-08-13"}, {"id": "INV-4", "name": "Wiring Kit Wolfbox", "code": "WKT001", "category": "Cameras", "sellingPrice": 125, "cost": 95.79, "opening": 3, "newQty": 3, "soldQty": 0, "qty": 6, "unit": "Nos", "stockValue": 574.74, "newDate": "2026-08-13"}, {"id": "INV-5", "name": "LC 200 Front Bumper -Carbon Steel Black", "code": "FB001", "category": "4*4 Accessories", "sellingPrice": 4277.88, "cost": 3168.8, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 3168.8, "newDate": ""}, {"id": "INV-6", "name": "Leopard 5 Front Bumper -Manganese Steel Black", "code": "FB002", "category": "4*4 Accessories", "sellingPrice": 3751.35, "cost": 2778.78, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 2778.78, "newDate": ""}, {"id": "INV-7", "name": "Awning Quick Release Bracket", "code": "AWN001", "category": "4*4 Accessories", "sellingPrice": 350, "cost": 146.3, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 292.6, "newDate": ""}, {"id": "INV-8", "name": "Quick Deflator Long Type", "code": "QDF001", "category": "Tyre", "sellingPrice": 354, "cost": 236, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 236, "newDate": ""}, {"id": "INV-9", "name": "Quick Deflator Short Type", "code": "QDF002", "category": "4*4 Accessories", "sellingPrice": 278.3, "cost": 185.53, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 371.06, "newDate": ""}, {"id": "INV-10", "name": "Black Pole with Flag (Force USA)", "code": "FLG001", "category": "4*4 Accessories", "sellingPrice": 252.36, "cost": 126.18, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 126.18, "newDate": ""}, {"id": "INV-11", "name": "Awning Shower Tent", "code": "AWN002", "category": "4*4 Accessories", "sellingPrice": 827.48, "cost": 413.74, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 827.48, "newDate": ""}, {"id": "INV-12", "name": "Awning Tent 180 Degree", "code": "AWN003", "category": "4*4 Accessories", "sellingPrice": 1959.48, "cost": 979.74, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 979.74, "newDate": ""}, {"id": "INV-13", "name": "Snorkel 2016-2021", "code": "SNK001", "category": "4*4 Accessories", "sellingPrice": 482.02, "cost": 241.01, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 241.01, "newDate": ""}, {"id": "INV-14", "name": "Grill light 12 Volte", "code": "GRL001", "category": "4*4 Accessories", "sellingPrice": 150, "cost": 75, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 150, "newDate": ""}, {"id": "INV-15", "name": "Filter FL 20-91 (Zoomlion 5 T FK)", "code": "FLT001", "category": "Filters", "sellingPrice": 57.35, "cost": 38.23, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 152.92, "newDate": ""}, {"id": "INV-16", "name": "Filter 1-1305 OF (Forklift)", "code": "FLT002", "category": "Filters", "sellingPrice": 111.07, "cost": 74.05, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 74.05, "newDate": ""}, {"id": "INV-17", "name": "Filters 22677134 DF(ISUZU)", "code": "FLT003", "category": "Filters", "sellingPrice": 101.85, "cost": 67.9, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 67.9, "newDate": ""}, {"id": "INV-18", "name": "fILTER 2395444 OF (ISUZU0", "code": "FLT004", "category": "Filters", "sellingPrice": 137.06, "cost": 91.37, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 91.37, "newDate": ""}, {"id": "INV-19", "name": "Filter C 5717 DF (UD)", "code": "FLT005", "category": "Filters", "sellingPrice": 212.94, "cost": 141.96, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 141.96, "newDate": ""}, {"id": "INV-20", "name": "Filter SFC01431", "code": "FLT006", "category": "Filters", "sellingPrice": 120.42, "cost": 80.28, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 321.12, "newDate": ""}, {"id": "INV-21", "name": "Filter FC 7104 FF(UD QUESTOR)", "code": "FLT007", "category": "Filters", "sellingPrice": 0, "cost": 141.96, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 283.92, "newDate": ""}, {"id": "INV-22", "name": "Filter SFC-7903 WS (ud /isuzu)", "code": "FLT008", "category": "Filters", "sellingPrice": 268.46, "cost": 178.97, "opening": 5, "newQty": 0, "soldQty": 0, "qty": 5, "unit": "Nos", "stockValue": 894.85, "newDate": ""}, {"id": "INV-23", "name": "Engine oil 15w 40", "code": "EOL001", "category": "General", "sellingPrice": 12, "cost": 7.18, "opening": 61, "newQty": 0, "soldQty": 0, "qty": 61, "unit": "Ltr", "stockValue": 437.97999999999996, "newDate": ""}, {"id": "INV-24", "name": "Wire Rope 10*mm(Ungalavanized -Mpa 1960-KN69.7RHRL)", "code": "WRP001", "category": "General", "sellingPrice": 10, "cost": 2.91, "opening": 1190, "newQty": 0, "soldQty": 0, "qty": 1190, "unit": "Mtr", "stockValue": 3462.9, "newDate": ""}, {"id": "INV-25", "name": "Wire Rope 12*mm (Ungalvaized -Mpa 2160-KN106-RHRL)", "code": "WRP002", "category": "Wire Rope", "sellingPrice": 13, "cost": 5.33, "opening": 1350, "newQty": 0, "soldQty": 0, "qty": 1350, "unit": "Mtr", "stockValue": 7195.5, "newDate": ""}, {"id": "INV-26", "name": "Charger SRT Body Kit", "code": "BDK001", "category": "General", "sellingPrice": 4100, "cost": 1680, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 1680, "newDate": ""}, {"id": "INV-27", "name": "New Design 4*4 35w 3 inch Led work roof Spot strobe car light auto fog light for...(cool white)", "code": "FGL001", "category": "Lights", "sellingPrice": 160, "cost": 80.72, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 322.88, "newDate": ""}, {"id": "INV-28", "name": "3.5 INCH 12V 35WTS AMBER WATER PROOF AUTO MOTORCYCLE AUXILIARY SMALL FOG DRIVING POD(COOL WHITE)", "code": "FGL002", "category": "Lights", "sellingPrice": 175, "cost": 80.73, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 322.92, "newDate": ""}, {"id": "INV-29", "name": "NEW 4INCH 100W RGB LED WORK FOG DRIVING LIGHT BAR FOR CAR/TRUCK/UTV/MOTORCYCLE ALUMINIUM(RGB SPECIFICATION)", "code": "FGL003", "category": "Lights", "sellingPrice": 215.34, "cost": 107.67, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 430.68, "newDate": ""}, {"id": "INV-30", "name": "YELLOW JEEP 7 INCH 100W RATED POWER 80 WATTS ROUND MOTOR CYCLE HEADLIGHT SUPER BRIGHT RGB LED FOG DRIVING(COOL WHITE,)", "code": "HDL001", "category": "Lights", "sellingPrice": 470, "cost": 233.73, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 934.92, "newDate": ""}, {"id": "INV-31", "name": "UNIVERSAL YELLOW 5 INCH 100W RATED 100 WATTS LED HEADLIGHT 12V DRIVING SPOT LIGHT FOR OFFROAD VEHICLE 4*4(COOL WHITE,)", "code": "HDL002", "category": "Lights", "sellingPrice": 251, "cost": 125.7, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 502.8, "newDate": ""}, {"id": "INV-32", "name": "42INCH240W SUPER BRIGHT RGB LED LIGHT BAR DOUBLE ROW WATER PROOF 10/20/20/40/52 INCH CAR TRUCK(NATURAL WHITE SPECIFICATION,RATED POWER 36-300W BEAM ANGLE SPOT", "code": "LBR001", "category": "Lights", "sellingPrice": 1267.86, "cost": 422.86, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 422.86, "newDate": ""}, {"id": "INV-33", "name": "15INCH 72W SUPER BRIGHT RGB LED LIGHT BAR DOUBLE ROW WATER PROOF 10/20/20/40/52 INCH CAR TRUCK(NATURAL WHITE SPECIFICATION, RATED POWER 36-300W BEAM ANGLE SPOT", "code": "LBR002", "category": "Lights", "sellingPrice": 361, "cost": 180.67, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 361.34, "newDate": ""}, {"id": "INV-34", "name": "15 INCH 72 WAUTOMOTIVE 10/20/20/40/50/52 INCH 12V AMBER AURORA RGB STROBE LED MINI LIGHT (NATURAL WHITE SPECIFICATION  RATED POWER 36-300W BEAM ANGLE SPOT)", "code": "STR001", "category": "Lights", "sellingPrice": 253, "cost": 126.85, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 253.7, "newDate": ""}, {"id": "INV-35", "name": "42INCH 240W AUTOMOTIVE 10/20/20/40/50/52 INCH 12V AMBER AURORA RGB STROBE LED MINI LIGHT (NATURAL WHITE SPECIFICATION 42INCH 240W RATED POWER 36-300W BEAM ANGLE SPOT)", "code": "STR002", "category": "Lights", "sellingPrice": 475, "cost": 237.37, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 237.37, "newDate": ""}, {"id": "INV-36", "name": "3 CORE 3 PINS 1AUTOMOTIVE 12V 3-PINWIRING HARNESS 1TO 2 SPLITTER FORR LED LIGHT BAR DUAL OUTPUT Y CAB(SPECIFICATION 3 CORE 3 PINS 1(14AWG))", "code": "WHS001", "category": "Lights", "sellingPrice": 77, "cost": 38.43, "opening": 3, "newQty": 0, "soldQty": 0, "qty": 3, "unit": "Nos", "stockValue": 115.28999999999999, "newDate": ""}, {"id": "INV-37", "name": "2 CORE 2 PINS 1AUTOMOTIVE 12V 3-PINWIRING HARNESS 1TO 2 SPLITTER FOR LED LIGHT BAR DUAL OUTPUT Y CAB(SPECIFICATION 2 CORE 2 PINS 1(14AWG))", "code": "WHS002", "category": "Lights", "sellingPrice": 77, "cost": 38.43, "opening": 3, "newQty": 0, "soldQty": 0, "qty": 3, "unit": "Nos", "stockValue": 115.28999999999999, "newDate": ""}, {"id": "INV-38", "name": "3.5 INCH COVER LIGHT CUSTOM UNIVERSAL 3.5/4/5/7/9 INCH BLAK WHITE YELLOW 4*4 LED FOG LIGHT SPOTLIGHT(SPECIFICATION 3.5 INCH COVER LIGHT COLOR -BLACK 1)", "code": "CVL001", "category": "Lights", "sellingPrice": 20, "cost": 9.61, "opening": 8, "newQty": 0, "soldQty": 0, "qty": 8, "unit": "Nos", "stockValue": 76.88, "newDate": ""}, {"id": "INV-39", "name": "4 INCH COVER LIGHT CUSTOM UNIVERSAL 3.5/4/5/7/9 INCH BLAK WHITE YELLOW 4*4 LED FOG LIGHT SPOTLIGHT(SPECIFICATION 4 INCH COVER LIGHT COLOR -BLACK 1)", "code": "CVL002", "category": "Lights", "sellingPrice": 25, "cost": 11.53, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 46.12, "newDate": ""}, {"id": "INV-40", "name": "5 INCH COVER LIGHT CUSTOM UNIVERSAL 3.5/4/5/7/9 INCH BLAK WHITE YELLOW 4*4 LED FOG LIGHT SPOTLIGHT(SPECIFICATION 5 INCH COVER LIGHT COLOR -BLACK 1)", "code": "CVL003", "category": "Lights", "sellingPrice": 27, "cost": 13.46, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 53.84, "newDate": ""}, {"id": "INV-41", "name": "7 INCH COVER LIGHT CUSTOM UNIVERSAL 3.5/4/5/7/9 INCH BLAK WHITE YELLOW 4*4 LED FOG LIGHT SPOTLIGHT(SPECIFICATION 7 INCH COVER LIGHT COLOR -BLACK 1)", "code": "CVL004", "category": "Lights", "sellingPrice": 30.76, "cost": 15.38, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 61.52, "newDate": ""}, {"id": "INV-42", "name": "SHOCK (DISPLAY)", "code": "SHK001", "category": "4*4 Accessories", "sellingPrice": 500, "cost": 500, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 500, "newDate": ""}, {"id": "INV-43", "name": "CAMERA ADHINAKAM DASH CAMERA", "code": "DCM003", "category": "Cameras", "sellingPrice": 469.64, "cost": 234.82, "opening": 7, "newQty": 0, "soldQty": 0, "qty": 7, "unit": "Nos", "stockValue": 1643.74, "newDate": ""}, {"id": "INV-44", "name": "BRACKET WOLBOX", "code": "BRK001", "category": "Cameras", "sellingPrice": 257.73, "cost": 171.82, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 343.64, "newDate": ""}, {"id": "INV-45", "name": "UNIVERSAL MINI 3 INCH 20W RATED POWER 20 WATTS YELLOW FORD RANGER JEEP VEHICLE WATERPROOF LED FOG DRIVING DITCH", "code": "FGL004", "category": "Lights", "sellingPrice": 99.96, "cost": 49.98, "opening": 2, "newQty": 0, "soldQty": 0, "qty": 2, "unit": "Nos", "stockValue": 99.96, "newDate": ""}, {"id": "INV-46", "name": "Swift-Break Pad FR -NGN", "code": "BPD001", "category": "General", "sellingPrice": 99, "cost": 90, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 90, "newDate": ""}, {"id": "INV-47", "name": "Oil Filter (16510-82703) Swift", "code": "FLT009", "category": "Filters", "sellingPrice": 22, "cost": 20, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 20, "newDate": ""}, {"id": "INV-48", "name": "Engine Oil 20W 50-04 Ltr(Helix)", "code": "EOL002", "category": "Engine Oil", "sellingPrice": 17.88, "cost": 16.25, "opening": 4, "newQty": 0, "soldQty": 0, "qty": 4, "unit": "Nos", "stockValue": 65, "newDate": ""}, {"id": "INV-49", "name": "Break Oil Light Vehicle", "code": "BRO001", "category": "Engine Oil", "sellingPrice": 11, "cost": 10, "opening": 1, "newQty": 0, "soldQty": 0, "qty": 1, "unit": "Nos", "stockValue": 10, "newDate": ""}];
+const PURCHASES = [{"sl": 1, "product": "Tire", "spec": "315/80R22.5 (BT)", "qty": 4, "unitCost": 565.0, "value": 2260.0, "shipDate": "2026-08-26", "eta": "2026-10-09", "supplier": "Guangdong Lianhe Steel Co Ltd", "status": "Ordered"}, {"sl": 2, "product": "Tire", "spec": "12R24 (TR)", "qty": 4, "unitCost": 740.0, "value": 2960.0, "shipDate": "2026-08-26", "eta": "2026-10-09", "supplier": "Guangdong Lianhe Steel Co Ltd", "status": "Ordered"}, {"sl": 3, "product": "Tire", "spec": "9.0R20 (FK 10T)", "qty": 4, "unitCost": 475.0, "value": 1900.0, "shipDate": "2026-08-26", "eta": "2026-10-09", "supplier": "Guangdong Lianhe Steel Co Ltd", "status": "Ordered"}, {"sl": 4, "product": "Tire", "spec": "8.25R15 (LB TR)", "qty": 4, "unitCost": 346.7, "value": 1386.8, "shipDate": "2026-08-26", "eta": "2026-10-09", "supplier": "Guangdong Lianhe Steel Co Ltd", "status": "Ordered"}];
+const ATTENDANCE = [{"id": "ATT-1", "employee": "ANISH", "date": "2026-06-01", "start": "11:00", "end": "18:10", "hours": 7.17}, {"id": "ATT-2", "employee": "CYRIL", "date": "2026-06-01", "start": "09:29", "end": "16:44", "hours": 7.25}, {"id": "ATT-3", "employee": "ISHU", "date": "2026-06-01", "start": "08:49", "end": "08:49", "hours": 0.0}, {"id": "ATT-4", "employee": "JAMEEL", "date": "2026-06-01", "start": "09:36", "end": "21:34", "hours": 11.97}, {"id": "ATT-5", "employee": "KISHORE", "date": "2026-06-01", "start": "07:58", "end": "18:17", "hours": 10.32}, {"id": "ATT-6", "employee": "SANIL", "date": "2026-06-01", "start": "08:34", "end": "18:09", "hours": 9.58}, {"id": "ATT-7", "employee": "WASIK", "date": "2026-06-01", "start": "08:31", "end": "18:09", "hours": 9.63}, {"id": "ATT-8", "employee": "ANISH", "date": "2026-06-02", "start": "08:48", "end": "18:42", "hours": 9.9}, {"id": "ATT-9", "employee": "CYRIL", "date": "2026-06-02", "start": "09:30", "end": "21:31", "hours": 12.02}, {"id": "ATT-10", "employee": "FASALU", "date": "2026-06-02", "start": "09:12", "end": "18:02", "hours": 8.83}, {"id": "ATT-11", "employee": "ISHU", "date": "2026-06-02", "start": "08:51", "end": "18:02", "hours": 9.18}, {"id": "ATT-12", "employee": "JAMEEL", "date": "2026-06-02", "start": "09:34", "end": "16:29", "hours": 6.92}, {"id": "ATT-13", "employee": "KISHORE", "date": "2026-06-02", "start": "08:05", "end": "18:33", "hours": 10.47}, {"id": "ATT-14", "employee": "SANIL", "date": "2026-06-02", "start": "08:33", "end": "21:27", "hours": 12.9}, {"id": "ATT-15", "employee": "WASIK", "date": "2026-06-02", "start": "08:35", "end": "18:03", "hours": 9.47}, {"id": "ATT-16", "employee": "ANISH", "date": "2026-06-03", "start": "12:12", "end": "12:12", "hours": 0.0}, {"id": "ATT-17", "employee": "CYRIL", "date": "2026-06-03", "start": "09:32", "end": "21:30", "hours": 11.97}, {"id": "ATT-18", "employee": "FASALU", "date": "2026-06-03", "start": "09:01", "end": "18:32", "hours": 9.52}, {"id": "ATT-19", "employee": "ISHU", "date": "2026-06-03", "start": "10:42", "end": "10:42", "hours": 0.0}, {"id": "ATT-20", "employee": "JAMEEL", "date": "2026-06-03", "start": "09:31", "end": "21:31", "hours": 12.0}, {"id": "ATT-21", "employee": "KISHORE", "date": "2026-06-03", "start": "08:06", "end": "18:52", "hours": 10.77}, {"id": "ATT-22", "employee": "SANIL", "date": "2026-06-03", "start": "08:31", "end": "21:13", "hours": 12.7}, {"id": "ATT-23", "employee": "WASIK", "date": "2026-06-03", "start": "20:44", "end": "20:44", "hours": 0.0}, {"id": "ATT-24", "employee": "ANISH", "date": "2026-06-04", "start": "08:54", "end": "18:02", "hours": 9.13}, {"id": "ATT-25", "employee": "CYRIL", "date": "2026-06-04", "start": "09:23", "end": "21:29", "hours": 12.1}, {"id": "ATT-26", "employee": "FASALU", "date": "2026-06-04", "start": "08:56", "end": "08:56", "hours": 0.0}, {"id": "ATT-27", "employee": "ISHU", "date": "2026-06-04", "start": "18:03", "end": "18:03", "hours": 0.0}, {"id": "ATT-28", "employee": "JAMEEL", "date": "2026-06-04", "start": "09:31", "end": "09:31", "hours": 0.0}, {"id": "ATT-29", "employee": "KISHORE", "date": "2026-06-04", "start": "08:04", "end": "21:52", "hours": 13.8}, {"id": "ATT-30", "employee": "SANIL", "date": "2026-06-04", "start": "08:14", "end": "19:33", "hours": 11.32}, {"id": "ATT-31", "employee": "WASIK", "date": "2026-06-04", "start": "08:11", "end": "21:52", "hours": 13.68}, {"id": "ATT-32", "employee": "ANISH", "date": "2026-06-06", "start": "08:49", "end": "17:00", "hours": 8.18}, {"id": "ATT-33", "employee": "CYRIL", "date": "2026-06-06", "start": "09:18", "end": "21:50", "hours": 12.53}, {"id": "ATT-34", "employee": "FASALU", "date": "2026-06-06", "start": "08:49", "end": "08:49", "hours": 0.0}, {"id": "ATT-35", "employee": "ISHU", "date": "2026-06-06", "start": "08:58", "end": "18:28", "hours": 9.5}, {"id": "ATT-36", "employee": "JAMEEL", "date": "2026-06-06", "start": "09:34", "end": "21:47", "hours": 12.22}, {"id": "ATT-37", "employee": "KISHORE", "date": "2026-06-06", "start": "09:09", "end": "20:24", "hours": 11.25}, {"id": "ATT-38", "employee": "SANIL", "date": "2026-06-06", "start": "08:29", "end": "18:47", "hours": 10.3}, {"id": "ATT-39", "employee": "WASIK", "date": "2026-06-06", "start": "08:32", "end": "21:53", "hours": 13.35}, {"id": "ATT-40", "employee": "ANISH", "date": "2026-06-07", "start": "08:55", "end": "18:06", "hours": 9.18}, {"id": "ATT-41", "employee": "CYRIL", "date": "2026-06-07", "start": "09:31", "end": "21:29", "hours": 11.97}, {"id": "ATT-42", "employee": "FASALU", "date": "2026-06-07", "start": "08:56", "end": "08:56", "hours": 0.0}, {"id": "ATT-43", "employee": "ISHU", "date": "2026-06-07", "start": "08:42", "end": "18:04", "hours": 9.37}, {"id": "ATT-44", "employee": "JAMEEL", "date": "2026-06-07", "start": "09:30", "end": "16:31", "hours": 7.02}, {"id": "ATT-45", "employee": "KISHORE", "date": "2026-06-07", "start": "08:07", "end": "18:08", "hours": 10.02}, {"id": "ATT-46", "employee": "SANIL", "date": "2026-06-07", "start": "08:35", "end": "18:06", "hours": 9.52}, {"id": "ATT-47", "employee": "WASIK", "date": "2026-06-07", "start": "08:36", "end": "18:08", "hours": 9.53}, {"id": "ATT-48", "employee": "ANISH", "date": "2026-06-08", "start": "09:23", "end": "09:23", "hours": 0.0}, {"id": "ATT-49", "employee": "CYRIL", "date": "2026-06-08", "start": "09:30", "end": "21:50", "hours": 12.33}, {"id": "ATT-50", "employee": "ISHU", "date": "2026-06-08", "start": "09:23", "end": "15:24", "hours": 6.02}, {"id": "ATT-51", "employee": "JAMEEL", "date": "2026-06-08", "start": "09:29", "end": "16:34", "hours": 7.08}, {"id": "ATT-52", "employee": "KISHORE", "date": "2026-06-08", "start": "08:10", "end": "18:02", "hours": 9.87}, {"id": "ATT-53", "employee": "SANIL", "date": "2026-06-08", "start": "08:31", "end": "19:43", "hours": 11.2}, {"id": "ATT-54", "employee": "WASIK", "date": "2026-06-08", "start": "09:31", "end": "09:31", "hours": 0.0}, {"id": "ATT-55", "employee": "ANISH", "date": "2026-06-09", "start": "08:46", "end": "18:01", "hours": 9.25}, {"id": "ATT-56", "employee": "CYRIL", "date": "2026-06-09", "start": "09:29", "end": "21:30", "hours": 12.02}, {"id": "ATT-57", "employee": "FASALU", "date": "2026-06-09", "start": "08:46", "end": "18:08", "hours": 9.37}, {"id": "ATT-58", "employee": "ISHU", "date": "2026-06-09", "start": "14:18", "end": "18:18", "hours": 4.0}, {"id": "ATT-59", "employee": "JAMEEL", "date": "2026-06-09", "start": "09:29", "end": "12:40", "hours": 3.18}, {"id": "ATT-60", "employee": "KISHORE", "date": "2026-06-09", "start": "08:07", "end": "18:09", "hours": 10.03}, {"id": "ATT-61", "employee": "SANIL", "date": "2026-06-09", "start": "08:31", "end": "18:58", "hours": 10.45}, {"id": "ATT-62", "employee": "WASIK", "date": "2026-06-09", "start": "08:34", "end": "18:05", "hours": 9.52}, {"id": "ATT-63", "employee": "ANISH", "date": "2026-06-10", "start": "08:49", "end": "08:49", "hours": 0.0}, {"id": "ATT-64", "employee": "CYRIL", "date": "2026-06-10", "start": "09:30", "end": "21:34", "hours": 12.07}, {"id": "ATT-65", "employee": "FASALU", "date": "2026-06-10", "start": "08:49", "end": "19:18", "hours": 10.48}, {"id": "ATT-66", "employee": "ISHU", "date": "2026-06-10", "start": "08:34", "end": "19:18", "hours": 10.73}, {"id": "ATT-67", "employee": "JAMEEL", "date": "2026-06-10", "start": "09:32", "end": "21:35", "hours": 12.05}, {"id": "ATT-68", "employee": "KISHORE", "date": "2026-06-10", "start": "08:06", "end": "08:06", "hours": 0.0}, {"id": "ATT-69", "employee": "SANIL", "date": "2026-06-10", "start": "08:28", "end": "19:46", "hours": 11.3}, {"id": "ATT-70", "employee": "WASIK", "date": "2026-06-10", "start": "08:37", "end": "19:27", "hours": 10.83}, {"id": "ATT-71", "employee": "AMAL", "date": "2026-06-11", "start": "08:55", "end": "19:04", "hours": 10.15}, {"id": "ATT-72", "employee": "ANISH", "date": "2026-06-11", "start": "08:51", "end": "08:51", "hours": 0.0}, {"id": "ATT-73", "employee": "CYRIL", "date": "2026-06-11", "start": "09:03", "end": "20:04", "hours": 11.02}, {"id": "ATT-74", "employee": "ISHU", "date": "2026-06-11", "start": "08:50", "end": "18:34", "hours": 9.73}, {"id": "ATT-75", "employee": "JAMEEL", "date": "2026-06-11", "start": "12:48", "end": "19:11", "hours": 6.38}, {"id": "ATT-76", "employee": "KISHORE", "date": "2026-06-11", "start": "08:06", "end": "18:12", "hours": 10.1}, {"id": "ATT-77", "employee": "SANIL", "date": "2026-06-11", "start": "08:29", "end": "18:34", "hours": 10.08}, {"id": "ATT-78", "employee": "WASIK", "date": "2026-06-11", "start": "08:35", "end": "18:04", "hours": 9.48}, {"id": "ATT-79", "employee": "AMAL", "date": "2026-06-13", "start": "08:34", "end": "08:34", "hours": 0.0}, {"id": "ATT-80", "employee": "ANISH", "date": "2026-06-13", "start": "08:38", "end": "18:18", "hours": 9.67}, {"id": "ATT-81", "employee": "CYRIL", "date": "2026-06-13", "start": "09:20", "end": "21:29", "hours": 12.15}, {"id": "ATT-82", "employee": "FASALU", "date": "2026-06-13", "start": "08:42", "end": "08:42", "hours": 0.0}, {"id": "ATT-83", "employee": "ISHU", "date": "2026-06-13", "start": "08:46", "end": "08:46", "hours": 0.0}, {"id": "ATT-84", "employee": "JAMEEL", "date": "2026-06-13", "start": "12:34", "end": "21:29", "hours": 8.92}, {"id": "ATT-85", "employee": "KISHORE", "date": "2026-06-13", "start": "07:55", "end": "18:38", "hours": 10.72}, {"id": "ATT-86", "employee": "WASIK", "date": "2026-06-13", "start": "08:37", "end": "18:33", "hours": 9.93}, {"id": "ATT-87", "employee": "ANISH", "date": "2026-06-14", "start": "09:04", "end": "18:28", "hours": 9.4}, {"id": "ATT-88", "employee": "CYRIL", "date": "2026-06-14", "start": "09:21", "end": "21:35", "hours": 12.23}, {"id": "ATT-89", "employee": "FASALU", "date": "2026-06-14", "start": "09:04", "end": "09:04", "hours": 0.0}, {"id": "ATT-90", "employee": "ISHU", "date": "2026-06-14", "start": "08:35", "end": "18:25", "hours": 9.83}, {"id": "ATT-91", "employee": "JAMEEL", "date": "2026-06-14", "start": "09:28", "end": "21:29", "hours": 12.02}, {"id": "ATT-92", "employee": "KISHORE", "date": "2026-06-14", "start": "07:57", "end": "19:15", "hours": 11.3}, {"id": "ATT-93", "employee": "WASIK", "date": "2026-06-14", "start": "08:35", "end": "18:19", "hours": 9.73}, {"id": "ATT-94", "employee": "AMAL", "date": "2026-06-15", "start": "08:51", "end": "08:51", "hours": 0.0}, {"id": "ATT-95", "employee": "ANISH", "date": "2026-06-15", "start": "08:59", "end": "08:59", "hours": 0.0}, {"id": "ATT-96", "employee": "CYRIL", "date": "2026-06-15", "start": "09:30", "end": "21:34", "hours": 12.07}, {"id": "ATT-97", "employee": "FASALU", "date": "2026-06-15", "start": "08:59", "end": "08:59", "hours": 0.0}, {"id": "ATT-98", "employee": "ISHU", "date": "2026-06-15", "start": "08:41", "end": "18:14", "hours": 9.55}, {"id": "ATT-99", "employee": "JAMEEL", "date": "2026-06-15", "start": "09:27", "end": "21:39", "hours": 12.2}, {"id": "ATT-100", "employee": "KISHORE", "date": "2026-06-15", "start": "07:56", "end": "19:57", "hours": 12.02}, {"id": "ATT-101", "employee": "WASIK", "date": "2026-06-15", "start": "08:40", "end": "19:29", "hours": 10.82}, {"id": "ATT-102", "employee": "ANISH", "date": "2026-06-16", "start": "08:55", "end": "18:30", "hours": 9.58}, {"id": "ATT-103", "employee": "CYRIL", "date": "2026-06-16", "start": "09:27", "end": "21:44", "hours": 12.28}, {"id": "ATT-104", "employee": "FASALU", "date": "2026-06-16", "start": "08:48", "end": "18:21", "hours": 9.55}, {"id": "ATT-105", "employee": "ISHU", "date": "2026-06-16", "start": "10:11", "end": "18:09", "hours": 7.97}, {"id": "ATT-106", "employee": "JAMEEL", "date": "2026-06-16", "start": "09:30", "end": "21:33", "hours": 12.05}, {"id": "ATT-107", "employee": "KISHORE", "date": "2026-06-16", "start": "07:57", "end": "18:06", "hours": 10.15}, {"id": "ATT-108", "employee": "VYSAKH", "date": "2026-06-16", "start": "19:06", "end": "19:06", "hours": 0.0}, {"id": "ATT-109", "employee": "WASIK", "date": "2026-06-16", "start": "08:30", "end": "18:06", "hours": 9.6}, {"id": "ATT-110", "employee": "AMAL", "date": "2026-06-17", "start": "08:39", "end": "08:39", "hours": 0.0}, {"id": "ATT-111", "employee": "ANISH", "date": "2026-06-17", "start": "09:03", "end": "09:03", "hours": 0.0}, {"id": "ATT-112", "employee": "CYRIL", "date": "2026-06-17", "start": "09:30", "end": "21:30", "hours": 12.0}, {"id": "ATT-113", "employee": "FASALU", "date": "2026-06-17", "start": "09:03", "end": "09:03", "hours": 0.0}, {"id": "ATT-114", "employee": "ISHU", "date": "2026-06-17", "start": "09:37", "end": "19:12", "hours": 9.58}, {"id": "ATT-115", "employee": "JAMEEL", "date": "2026-06-17", "start": "09:20", "end": "09:20", "hours": 0.0}, {"id": "ATT-116", "employee": "KISHORE", "date": "2026-06-17", "start": "07:51", "end": "21:50", "hours": 13.98}, {"id": "ATT-117", "employee": "WASIK", "date": "2026-06-17", "start": "08:35", "end": "21:46", "hours": 13.18}, {"id": "ATT-118", "employee": "ANISH", "date": "2026-06-18", "start": "09:14", "end": "18:14", "hours": 9.0}, {"id": "ATT-119", "employee": "CYRIL", "date": "2026-06-18", "start": "09:28", "end": "21:21", "hours": 11.88}, {"id": "ATT-120", "employee": "FASALU", "date": "2026-06-18", "start": "09:15", "end": "18:57", "hours": 9.7}, {"id": "ATT-121", "employee": "ISHU", "date": "2026-06-18", "start": "08:49", "end": "18:13", "hours": 9.4}, {"id": "ATT-122", "employee": "JAMEEL", "date": "2026-06-18", "start": "09:28", "end": "13:55", "hours": 4.45}, {"id": "ATT-123", "employee": "KISHORE", "date": "2026-06-18", "start": "08:04", "end": "18:49", "hours": 10.75}, {"id": "ATT-124", "employee": "WASIK", "date": "2026-06-18", "start": "08:37", "end": "08:37", "hours": 0.0}, {"id": "ATT-125", "employee": "AMAL", "date": "2026-06-20", "start": "08:51", "end": "08:51", "hours": 0.0}, {"id": "ATT-126", "employee": "ANISH", "date": "2026-06-20", "start": "09:05", "end": "18:03", "hours": 8.97}, {"id": "ATT-127", "employee": "CYRIL", "date": "2026-06-20", "start": "09:28", "end": "21:32", "hours": 12.07}, {"id": "ATT-128", "employee": "FASALU", "date": "2026-06-20", "start": "09:05", "end": "18:03", "hours": 8.97}, {"id": "ATT-129", "employee": "ISHU", "date": "2026-06-20", "start": "08:41", "end": "18:14", "hours": 9.55}, {"id": "ATT-130", "employee": "JAMEEL", "date": "2026-06-20", "start": "09:27", "end": "21:30", "hours": 12.05}, {"id": "ATT-131", "employee": "KISHORE", "date": "2026-06-20", "start": "07:58", "end": "18:04", "hours": 10.1}, {"id": "ATT-132", "employee": "WASIK", "date": "2026-06-20", "start": "08:36", "end": "18:03", "hours": 9.45}, {"id": "ATT-133", "employee": "AMAL", "date": "2026-06-21", "start": "08:57", "end": "08:57", "hours": 0.0}, {"id": "ATT-134", "employee": "ANISH", "date": "2026-06-21", "start": "08:57", "end": "18:14", "hours": 9.28}, {"id": "ATT-135", "employee": "CYRIL", "date": "2026-06-21", "start": "09:32", "end": "21:29", "hours": 11.95}, {"id": "ATT-136", "employee": "FASALU", "date": "2026-06-21", "start": "18:14", "end": "18:14", "hours": 0.0}, {"id": "ATT-137", "employee": "ISHU", "date": "2026-06-21", "start": "08:47", "end": "08:47", "hours": 0.0}, {"id": "ATT-138", "employee": "JAMEEL", "date": "2026-06-21", "start": "09:39", "end": "09:39", "hours": 0.0}, {"id": "ATT-139", "employee": "KISHORE", "date": "2026-06-21", "start": "08:12", "end": "18:21", "hours": 10.15}, {"id": "ATT-140", "employee": "WASIK", "date": "2026-06-21", "start": "18:05", "end": "18:05", "hours": 0.0}, {"id": "ATT-141", "employee": "ANISH", "date": "2026-06-22", "start": "18:11", "end": "18:11", "hours": 0.0}, {"id": "ATT-142", "employee": "CYRIL", "date": "2026-06-22", "start": "09:31", "end": "20:34", "hours": 11.05}, {"id": "ATT-143", "employee": "ISHU", "date": "2026-06-22", "start": "08:45", "end": "18:32", "hours": 9.78}, {"id": "ATT-144", "employee": "JAMEEL", "date": "2026-06-22", "start": "09:33", "end": "21:25", "hours": 11.87}, {"id": "ATT-145", "employee": "KISHORE", "date": "2026-06-22", "start": "08:00", "end": "18:50", "hours": 10.83}, {"id": "ATT-146", "employee": "WASIK", "date": "2026-06-22", "start": "08:32", "end": "18:33", "hours": 10.02}, {"id": "ATT-147", "employee": "AMAL", "date": "2026-06-23", "start": "08:53", "end": "08:53", "hours": 0.0}, {"id": "ATT-148", "employee": "ANISH", "date": "2026-06-23", "start": "08:51", "end": "08:51", "hours": 0.0}, {"id": "ATT-149", "employee": "CYRIL", "date": "2026-06-23", "start": "12:37", "end": "12:37", "hours": 0.0}, {"id": "ATT-150", "employee": "FASALU", "date": "2026-06-23", "start": "08:52", "end": "18:09", "hours": 9.28}, {"id": "ATT-151", "employee": "ISHU", "date": "2026-06-23", "start": "08:52", "end": "18:00", "hours": 9.13}, {"id": "ATT-152", "employee": "JAMEEL", "date": "2026-06-23", "start": "09:30", "end": "21:12", "hours": 11.7}, {"id": "ATT-153", "employee": "KISHORE", "date": "2026-06-23", "start": "07:59", "end": "07:59", "hours": 0.0}, {"id": "ATT-154", "employee": "WASIK", "date": "2026-06-23", "start": "08:36", "end": "19:23", "hours": 10.78}, {"id": "ATT-155", "employee": "ANISH", "date": "2026-06-24", "start": "08:52", "end": "08:52", "hours": 0.0}, {"id": "ATT-156", "employee": "CYRIL", "date": "2026-06-24", "start": "08:52", "end": "12:30", "hours": 3.63}, {"id": "ATT-157", "employee": "ISHU", "date": "2026-06-24", "start": "08:36", "end": "18:08", "hours": 9.53}, {"id": "ATT-158", "employee": "JAMEEL", "date": "2026-06-24", "start": "09:01", "end": "21:00", "hours": 11.98}, {"id": "ATT-159", "employee": "KISHORE", "date": "2026-06-24", "start": "07:58", "end": "18:47", "hours": 10.82}, {"id": "ATT-160", "employee": "WASIK", "date": "2026-06-24", "start": "08:37", "end": "08:37", "hours": 0.0}, {"id": "ATT-161", "employee": "CYRIL", "date": "2026-06-25", "start": "09:02", "end": "20:31", "hours": 11.48}, {"id": "ATT-162", "employee": "FASALU", "date": "2026-06-25", "start": "09:00", "end": "09:00", "hours": 0.0}, {"id": "ATT-163", "employee": "ISHU", "date": "2026-06-25", "start": "08:40", "end": "18:26", "hours": 9.77}, {"id": "ATT-164", "employee": "JAMEEL", "date": "2026-06-25", "start": "09:18", "end": "20:30", "hours": 11.2}, {"id": "ATT-165", "employee": "KISHORE", "date": "2026-06-25", "start": "08:08", "end": "18:53", "hours": 10.75}, {"id": "ATT-166", "employee": "WASIK", "date": "2026-06-25", "start": "08:17", "end": "08:17", "hours": 0.0}, {"id": "ATT-167", "employee": "AMAL", "date": "2026-06-27", "start": "08:56", "end": "08:56", "hours": 0.0}, {"id": "ATT-168", "employee": "ANISH", "date": "2026-06-27", "start": "08:56", "end": "08:56", "hours": 0.0}, {"id": "ATT-169", "employee": "CYRIL", "date": "2026-06-27", "start": "09:05", "end": "09:05", "hours": 0.0}, {"id": "ATT-170", "employee": "FASALU", "date": "2026-06-27", "start": "08:55", "end": "08:55", "hours": 0.0}, {"id": "ATT-171", "employee": "ISHU", "date": "2026-06-27", "start": "08:46", "end": "08:46", "hours": 0.0}, {"id": "ATT-172", "employee": "KISHORE", "date": "2026-06-27", "start": "07:47", "end": "07:47", "hours": 0.0}, {"id": "ATT-173", "employee": "WASIK", "date": "2026-06-27", "start": "08:35", "end": "08:35", "hours": 0.0}];
+const JUNE = {"employeePerf": [{"name": "FAIZAL", "jobs": 31.0, "revenue": 7585.0, "expenses": 160.0, "profit": 7900.0, "profitPerJob": 254.838709677419}, {"name": "WASIK", "jobs": 26.0, "revenue": 11396.0, "expenses": 5309.07, "profit": 7683.83, "profitPerJob": 295.531923076923}, {"name": "AMAL", "jobs": 8.0, "revenue": 1400.0, "expenses": 65.0, "profit": 1755.0, "profitPerJob": 219.375}, {"name": "SANIL", "jobs": 2.0, "revenue": 1300.0, "expenses": 605.0, "profit": 1300.0, "profitPerJob": 650.0}, {"name": "CYRIL", "jobs": 2.0, "revenue": 0.0, "expenses": 77.0, "profit": 104.0, "profitPerJob": 52.0}, {"name": "KISHORE", "jobs": 1.0, "revenue": 513.0, "expenses": 297.2, "profit": 215.8, "profitPerJob": 215.8}, {"name": "CRL/JML", "jobs": 1.0, "revenue": 0.0, "expenses": 185.0, "profit": 25.0, "profitPerJob": 25.0}, {"name": "ARIF KISOR", "jobs": 1.0, "revenue": 0.0, "expenses": 0.0, "profit": 300.0, "profitPerJob": 300.0}, {"name": "RAKIB", "jobs": 1.0, "revenue": 0.0, "expenses": 0.0, "profit": 0.0, "profitPerJob": 0.0}], "deptPerf": [{"name": "Mechanical", "jobs": 15.0, "revenue": 8374.0, "expenses": 5414.07, "profit": 4702.83, "margin": 0.561598996895152}, {"name": "Calibration", "jobs": 27.0, "revenue": 5777.0, "expenses": 137.0, "profit": 5975.0, "margin": 1.034273844556}, {"name": "Electrical", "jobs": 22.0, "revenue": 4750.0, "expenses": 140.0, "profit": 5225.0, "margin": 1.1}, {"name": "Fabrication", "jobs": 6.0, "revenue": 2213.0, "expenses": 972.2, "profit": 2395.8, "margin": 1.08260280162675}, {"name": "Other", "jobs": 3.0, "revenue": 1230.0, "expenses": 35.0, "profit": 1135.0, "margin": 0.922764227642276}, {"name": "Painting", "jobs": 1.0, "revenue": 0.0, "expenses": 0.0, "profit": 0.0, "margin": 0.0}], "overheads": [{"item": "Rental Store", "amount": 4000.0}, {"item": "Rental Amal", "amount": 600.0}, {"item": "Salary Jameel", "amount": 2300.0}, {"item": "Salary Sanil", "amount": 2500.0}, {"item": "Salary Cyril", "amount": 2500.0}, {"item": "Salary Amal", "amount": 4200.0}, {"item": "Salary Rakeeb", "amount": 2000.0}, {"item": "Fuel Amal", "amount": 1000.0}, {"item": "Vehicle Expenses Amal", "amount": 300.0}, {"item": "Miscellaneous Expenses", "amount": 200.0}, {"item": "Telephone", "amount": 100.0}], "insights": ["• Top performer: FAIZAL — 31 jobs, QAR 7,900 profit, lowest expense ratio (mostly calibration jobs, low parts cost).", "• WASIK handles the most revenue (QAR 11,396) but also the most expenses (QAR 5,309) — mainly seal kits/oil-change parts on Mechanical jobs; his profit per job is lower than Faizal's despite similar job count.", "• SANIL and CYRIL have very few jobs (2 each) but high expense-to-revenue ratio — worth checking utilisation and job allocation for them.", "• RAKIB and ARIF KISOR each logged only 1 job with no profit/revenue tracked — flag for review (idle or unrecorded jobs).", "• Mechanical work type has the highest job expenses (QAR 5,414, ~83% of all job-related expenses) — this is the single biggest expense item to manage. It comes mainly from seal kits, gear/cooler pipe, oil-change parts.", "• Fabrication's expenses (QAR 972) are mostly welding consumables — small but worth tracking if fabrication volume grows.", "• On overheads, Rental Store (QAR 4,000) and Salary Amal (QAR 4,200) are the two largest fixed costs — together over 40% of all overheads — these are the expenses driving the month into a net loss."], "overheadsTotal": 19700.0};
+
+/* ============ END DATA ============ */
+
+const CAT_COLORS = {
+  "Calibration":"#3D8BFF","Electrical":"#F7941D","Mechanical":"#E5484D","Fabrication":"#2FAE6B",
+  "Painting":"#B15CDE","Installation":"#5CC8DE","Inspection":"#E0C341","Other":"#8A93A1"
+};
+function catColor(c){ return CAT_COLORS[c] || "#8A93A1"; }
+function fmt(n){ return "QAR " + Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function initials(name){ const p=(name||"").split(/[\s\/]+/).filter(Boolean); return p.length>1? p[0][0]+p[1][0] : (name||"?").slice(0,2); }
+function statusClass(s){
+  s=(s||"").toLowerCase();
+  if(s==="paid") return "status-paid";
+  if(s==="sent") return "status-sent";
+  if(s==="pending") return "status-pending";
+  return "status-free";
+}
+function emptyPanel(title, desc){
+  return `<div class="empty-panel">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 4v5"></path><path d="M9 14l2 2 4-4"></path></svg>
+    <div class="t">${title}</div><div class="d">${desc}</div></div>`;
+}
+
+/* ============ PERIOD STATE ============ */
+const PERIODS = {
+  "2026-08": {
+    label:"August 2026",
+    hasJobs:true,
+    hasDaily:true,
+    hasAttendance:false,
+    sheetName:"AUG-2026",
+    slRange:"73 rows (Job Cards 805–856 / 176–200), AUG-2026 sheet",
+    meta:"73 job cards · 01–29 Aug · AUG-2026 sheet · 61 Sent, 12 Pending",
+  },
+  "2026-07": {
+    label:"July 2026",
+    hasJobs:true,
+    hasDaily:true,
+    hasAttendance:false,
+    sheetName:"JULY-2026",
+    slRange:"Sl No 1–71 (Job Cards 762–812 / 151–174), JULY-2026 sheet",
+    meta:"71 job cards · Sl No 1–71 · JULY-2026 sheet · 64 Sent, 3 Paid, 4 Pending",
+  },
+  "2026-06": {
+    label:"June 2026",
+    hasJobs:false,
+    hasDaily:false,
+    hasAttendance:true,
+    meta:"74 job cards · reproduced from Performance Dashboard / Manager Status Report sheets (no row-level job cards in this workbook)",
+  }
+};
+let currentPeriod = "2026-07";
+
+/* ============ NAV ============ */
+document.querySelectorAll(".nav-item").forEach(el=>{
+  el.addEventListener("click", ()=>{
+    document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    el.classList.add("active");
+    document.getElementById("view-"+el.dataset.view).classList.add("active");
+  });
+});
+document.getElementById("periodSelect").addEventListener("change", (e)=>{
+  currentPeriod = e.target.value;
+  syncPeriodData();
+  renderAll();
+});
+
+/* ============ DATA ACCESSORS (period-aware) ============ */
+function getJobs(){ return PERIODS[currentPeriod].hasJobs ? JOBS : []; }
+function getKPIs(){
+  if(PERIODS[currentPeriod].hasJobs){
+    const jobs = JOBS;
+    const revenue = jobs.reduce((s,j)=>s+j.income,0);
+    const expenses = jobs.reduce((s,j)=>s+j.expenses,0);
+    const grossProfit = revenue-expenses;
+    const overheadTotal = OVERHEADS.total;
+    return {jobCount:jobs.length, revenue, expenses, grossProfit, overheadTotal, netProfit: grossProfit-overheadTotal};
+  } else {
+    const d = JUNE.deptPerf;
+    const jobCount = d.reduce((s,r)=>s+r.jobs,0);
+    const revenue = d.reduce((s,r)=>s+r.revenue,0);
+    const expenses = d.reduce((s,r)=>s+r.expenses,0);
+    const grossProfit = d.reduce((s,r)=>s+r.profit,0);
+    const overheadTotal = JUNE.overheadsTotal;
+    return {jobCount, revenue, expenses, grossProfit, overheadTotal, netProfit: grossProfit-overheadTotal};
+  }
+}
+function getOverheads(){
+  return PERIODS[currentPeriod].hasJobs ? {items:OVERHEADS.items, total:OVERHEADS.total} : {items:JUNE.overheads, total:JUNE.overheadsTotal};
+}
+function getEmployeeRows(){
+  if(PERIODS[currentPeriod].hasJobs){
+    const byEmp = {};
+    JOBS.forEach(j=>{
+      if(!byEmp[j.employee]) byEmp[j.employee] = {jobs:0, revenue:0, expenses:0, grossProfit:0};
+      const e = byEmp[j.employee];
+      e.jobs++; e.revenue+=j.income; e.expenses+=j.expenses; e.grossProfit+=j.grossProfit;
+    });
+    return Object.entries(byEmp).map(([name,v])=>({name,...v})).sort((a,b)=>b.revenue-a.revenue);
+  } else {
+    return JUNE.employeePerf.map(r=>({name:r.name, jobs:r.jobs, revenue:r.revenue, expenses:r.expenses, grossProfit:r.profit})).sort((a,b)=>b.revenue-a.revenue);
+  }
+}
+function getDeptRows(){
+  if(PERIODS[currentPeriod].hasJobs){
+    const byDept = {};
+    JOBS.forEach(j=>{
+      if(!byDept[j.category]) byDept[j.category] = {jobs:0, revenue:0, expenses:0, grossProfit:0};
+      const d = byDept[j.category];
+      d.jobs++; d.revenue+=j.income; d.expenses+=j.expenses; d.grossProfit+=j.grossProfit;
+    });
+    return Object.entries(byDept).map(([name,v])=>({name,...v,margin: v.revenue? v.grossProfit/v.revenue : 0})).sort((a,b)=>b.revenue-a.revenue);
+  } else {
+    return JUNE.deptPerf.map(r=>({name:r.name, jobs:r.jobs, revenue:r.revenue, expenses:r.expenses, grossProfit:r.profit, margin:r.margin})).sort((a,b)=>b.revenue-a.revenue);
+  }
+}
+
+/* ============ OVERVIEW ============ */
+function renderStatCards(){
+  const k = getKPIs();
+  const p = PERIODS[currentPeriod];
+  const cards = [
+    {label:"Job Cards", value: k.jobCount, color:"var(--blue)", note: p.hasJobs ? p.slRange : "per Manager Status Report total"},
+    {label:"Gross Revenue", value: fmt(k.revenue), color:"var(--green)", note:"sum of Inv Price/Gross Revenue"},
+    {label:"Job Expenses", value: fmt(k.expenses), color:"var(--red)", note:"sum of Job Expenses column"},
+    {label:"Gross Profit", value: fmt(k.grossProfit), color: k.grossProfit>=0?"var(--green)":"var(--red)", note:"Revenue − Job Expenses"},
+    {label:"Overheads", value: fmt(k.overheadTotal), color:"var(--red)", note: p.hasJobs ? "17 fixed-cost lines, "+p.sheetName+" sheet" : "11 fixed-cost lines, June sheet"},
+    {label:"Net Profit", value: fmt(k.netProfit), color: k.netProfit>=0?"var(--green)":"var(--red)", note:"Gross Profit − Overheads"},
+  ];
+  document.getElementById("statCards").innerHTML = cards.map(c=>`
+    <div class="stat-card"><div class="accent" style="background:${c.color}"></div>
+      <div class="label">${c.label}</div><div class="value">${c.value}</div><div class="delta">${c.note}</div>
+    </div>`).join("");
+
+  const banner = document.getElementById("lossBanner");
+  if(k.netProfit<0){
+    banner.style.display="flex";
+    banner.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>
+      <div><strong>Net loss this period: ${fmt(k.netProfit)}.</strong> Gross profit (${fmt(k.grossProfit)}) doesn't cover fixed overheads (${fmt(k.overheadTotal)}). See the Overheads panel below for the largest cost drivers.</div>`;
+  } else { banner.style.display="none"; }
+}
+
+function renderOverheadList(){
+  const oh = getOverheads();
+  document.getElementById("overheadList").innerHTML = oh.items.map(o=>`
+    <div class="overhead-row"><span>${o.item}</span><span>${fmt(o.amount)}</span></div>`).join("");
+  document.getElementById("overheadTotalDisplay").textContent = fmt(oh.total);
+  const p = PERIODS[currentPeriod];
+  document.getElementById("overheadSourceNote").textContent = p.label + (p.hasJobs ? " · from "+p.sheetName+" sheet" : " · from Performance Dashboard sheet");
+}
+
+let charts = {};
+function destroyChart(k){ if(charts[k]){ charts[k].destroy(); delete charts[k]; } }
+
+function renderTrendOrMixCharts(){
+  const p = PERIODS[currentPeriod];
+  const trendWrap = document.getElementById("trendChartWrap");
+  const mixWrap = document.getElementById("mixChartWrap");
+
+  if(p.hasDaily){
+    document.getElementById("trendTitle").innerHTML = 'Jobs &amp; Revenue by Day <span class="muted">'+p.label+'</span>';
+    trendWrap.innerHTML = '<canvas id="chartTrend"></canvas>';
+    const dateSet = [...new Set(JOBS.map(j=>j.date))].sort();
+    const revByDate = dateSet.map(d=> JOBS.filter(j=>j.date===d).reduce((s,j)=>s+j.income,0));
+    const jobsByDate = dateSet.map(d=> JOBS.filter(j=>j.date===d).length);
+    destroyChart("trend");
+    charts.trend = new Chart(document.getElementById("chartTrend"), {
+      data:{ labels: dateSet.map(d=>d.slice(5)), datasets:[
+        {type:"bar", label:"Jobs", data: jobsByDate, backgroundColor:"#272D35", yAxisID:"y1", borderRadius:3},
+        {type:"line", label:"Revenue", data: revByDate, borderColor:"#F7941D", backgroundColor:"#F7941D", tension:.3, yAxisID:"y", pointRadius:2},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        scales:{ y:{position:"left", grid:{color:"#20242b"}, ticks:{color:"#8A93A1",font:{size:10}}},
+                 y1:{position:"right", grid:{display:false}, ticks:{color:"#5B6472",font:{size:10}}},
+                 x:{grid:{display:false}, ticks:{color:"#8A93A1",font:{size:9}}} },
+        plugins:{legend:{labels:{color:"#8A93A1",font:{size:10}}}}
+      }
+    });
+
+    document.getElementById("mixTitle").innerHTML = 'Job Status Mix <span class="muted">Invoice/Payment status</span>';
+    mixWrap.innerHTML = '<canvas id="chartStatus"></canvas>';
+    const statusCounts = {};
+    JOBS.forEach(j=>{ const key = j.remark==="FREE" ? "Free service" : (j.status||"Unknown"); statusCounts[key]=(statusCounts[key]||0)+1; });
+    destroyChart("status");
+    charts.status = new Chart(document.getElementById("chartStatus"), {
+      type:"doughnut",
+      data:{ labels:Object.keys(statusCounts), datasets:[{data:Object.values(statusCounts), backgroundColor:["#3D8BFF","#2FAE6B","#F7941D","#5B6472","#E5484D"], borderWidth:0}] },
+      options:{responsive:true,maintainAspectRatio:false, plugins:{legend:{position:"bottom",labels:{color:"#8A93A1",font:{size:10},padding:10}}}}
+    });
+  } else {
+    document.getElementById("trendTitle").innerHTML = 'Jobs &amp; Revenue by Day <span class="muted">not available</span>';
+    trendWrap.innerHTML = emptyPanel("No daily detail for "+p.label, "This workbook only has June's pre-aggregated employee/department totals — no row-level job cards to break down by day.");
+    destroyChart("trend");
+
+    document.getElementById("mixTitle").innerHTML = 'Revenue Share by Department <span class="muted">'+p.label+'</span>';
+    mixWrap.innerHTML = '<canvas id="chartStatus"></canvas>';
+    const rows = getDeptRows();
+    destroyChart("status");
+    charts.status = new Chart(document.getElementById("chartStatus"), {
+      type:"doughnut",
+      data:{ labels: rows.map(r=>r.name), datasets:[{data: rows.map(r=>r.revenue), backgroundColor: rows.map(r=>catColor(r.name)), borderWidth:0}] },
+      options:{responsive:true,maintainAspectRatio:false, plugins:{legend:{position:"bottom",labels:{color:"#8A93A1",font:{size:10},padding:10}}}}
+    });
+  }
+}
+
+function renderEmpRevenueChart(){
+  const rows = getEmployeeRows();
+  destroyChart("empRev");
+  charts.empRev = new Chart(document.getElementById("chartEmpRevenue"), {
+    type:"bar",
+    data:{ labels: rows.map(r=>r.name), datasets:[{data: rows.map(r=>r.revenue), backgroundColor:"#F7941D", borderRadius:4}] },
+    options:{indexAxis:"y", responsive:true,maintainAspectRatio:false,
+      scales:{ x:{grid:{color:"#20242b"},ticks:{color:"#8A93A1",font:{size:9}}}, y:{grid:{display:false},ticks:{color:"#8A93A1",font:{size:10}}} },
+      plugins:{legend:{display:false}} }
+  });
+}
+function renderDeptExpenseChart(canvasId){
+  const rows = getDeptRows().slice().sort((a,b)=>b.expenses-a.expenses);
+  const key = "deptExp_"+canvasId;
+  destroyChart(key);
+  charts[key] = new Chart(document.getElementById(canvasId), {
+    type:"bar",
+    data:{ labels: rows.map(r=>r.name), datasets:[{data: rows.map(r=>r.expenses), backgroundColor: rows.map(r=>catColor(r.name)), borderRadius:4}] },
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{ y:{grid:{color:"#20242b"},ticks:{color:"#8A93A1",font:{size:9}}}, x:{grid:{display:false},ticks:{color:"#8A93A1",font:{size:10}}} },
+      plugins:{legend:{display:false}} }
+  });
+}
+function renderInvCatChart(){
+  const invCatTotals = {};
+  INVENTORY.forEach(i=>{ invCatTotals[i.category]=(invCatTotals[i.category]||0)+i.stockValue; });
+  const invSorted = Object.entries(invCatTotals).sort((a,b)=>b[1]-a[1]);
+  destroyChart("invCat");
+  charts.invCat = new Chart(document.getElementById("chartInvCat"), {
+    type:"bar",
+    data:{ labels: invSorted.map(e=>e[0]), datasets:[{data: invSorted.map(e=>e[1]), backgroundColor:"#3D8BFF", borderRadius:4}] },
+    options:{indexAxis:"y", responsive:true,maintainAspectRatio:false,
+      scales:{ x:{grid:{color:"#20242b"},ticks:{color:"#8A93A1",font:{size:9}}}, y:{grid:{display:false},ticks:{color:"#8A93A1",font:{size:10}}} },
+      plugins:{legend:{display:false}} }
+  });
+}
+function renderAttHoursChart(){
+  const canvas = document.getElementById("chartAttHours");
+  if(!canvas) return;
+  const empHours = {};
+  ATTENDANCE.forEach(a=>{ empHours[a.employee]=(empHours[a.employee]||0)+a.hours; });
+  const hoursSorted = Object.entries(empHours).sort((a,b)=>b[1]-a[1]);
+  destroyChart("attHours");
+  charts.attHours = new Chart(canvas, {
+    type:"bar",
+    data:{ labels: hoursSorted.map(e=>e[0]), datasets:[{data: hoursSorted.map(e=>Math.round(e[1]*10)/10), backgroundColor:"#2FAE6B", borderRadius:4}] },
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{ y:{grid:{color:"#20242b"},ticks:{color:"#8A93A1",font:{size:9}}}, x:{grid:{display:false},ticks:{color:"#8A93A1",font:{size:10}}} },
+      plugins:{legend:{display:false}} }
+  });
+}
+
+/* ============ JOB CARDS VIEW ============ */
+function populateJobFilters(){
+  const cats = [...new Set(JOBS.map(j=>j.category))].sort();
+  const emps = [...new Set(JOBS.map(j=>j.employee))].sort();
+  const statuses = [...new Set(JOBS.map(j=>j.status))].sort();
+  document.getElementById("jobCategoryFilter").innerHTML = `<option value="">All departments</option>` + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
+  document.getElementById("jobEmployeeFilter").innerHTML = `<option value="">All staff</option>` + emps.map(c=>`<option value="${c}">${c}</option>`).join("");
+  document.getElementById("jobStatusFilter").innerHTML = `<option value="">All statuses</option>` + statuses.map(c=>`<option value="${c}">${c}</option>`).join("");
+}
+function renderJobsView(){
+  const p = PERIODS[currentPeriod];
+  document.getElementById("jobsSub").textContent = p.hasJobs
+    ? `All ${JOBS.length} job cards logged on the ${p.sheetName} sheet, ${p.slRange.split(", ")[0]}.`
+    : "Row-level job cards for June 2026 aren't included in this workbook — see the Employees and Departments tabs for June's totals.";
+  if(p.hasJobs){
+    document.getElementById("jobsToolbarWrap").style.display = "";
+    document.getElementById("jobsEmptyWrap").style.display = "none";
+    document.getElementById("jobsCountPill").textContent = JOBS.length + " job cards";
+    renderJobList();
+  } else {
+    document.getElementById("jobsToolbarWrap").style.display = "none";
+    document.getElementById("jobsCountPill").textContent = "0 row-level cards";
+    const wrap = document.getElementById("jobsEmptyWrap");
+    wrap.style.display = "";
+    wrap.innerHTML = emptyPanel("No row-level job cards for June 2026", "The workbook only includes June's pre-aggregated Employee and Department performance tables (from the Performance Dashboard sheet) — switch to the Employees or Departments tab to see June's totals, or use the Period dropdown to switch to July 2026 for the full job-card list.");
+  }
+}
+function renderJobList(){
+  const q = (document.getElementById("jobSearch").value||"").toLowerCase();
+  const cat = document.getElementById("jobCategoryFilter").value;
+  const emp = document.getElementById("jobEmployeeFilter").value;
+  const st = document.getElementById("jobStatusFilter").value;
+  const filtered = JOBS.filter(j=>{
+    if(cat && j.category!==cat) return false;
+    if(emp && j.employee!==emp) return false;
+    if(st && j.status!==st) return false;
+    if(q && !(`${j.id} ${j.customer} ${j.service} ${j.vehicle}`.toLowerCase().includes(q))) return false;
+    return true;
+  }).sort((a,b)=> {
+    if(!a.date && !b.date) return a.sl-b.sl;
+    if(!a.date) return 1;
+    if(!b.date) return -1;
+    return a.date.localeCompare(b.date) || a.sl-b.sl;
+  });
+  document.getElementById("jobsCountPill").textContent = filtered.length + " of " + JOBS.length + " job cards";
+  document.getElementById("jobList").innerHTML = filtered.map(j=>`
+    <div class="job-card">
+      <span class="ticket-id">${j.id}</span>
+      <div class="jc-main">
+        <div class="jc-title">${j.service}${j.remark==="FREE"?" · <span style='color:var(--text-faint);font-weight:600;'>FREE SERVICE</span>":""}</div>
+        <div class="jc-sub">${j.customer} · ${j.vehicle} · ${j.employee} · ${j.date}</div>
+      </div>
+      <div class="jc-meta">
+        <span class="cat-pill" style="background:${catColor(j.category)}22;color:${catColor(j.category)}"><span class="cat-dot" style="background:${catColor(j.category)}"></span>${j.category}</span>
+        <span class="status-badge ${statusClass(j.status)}">${j.status}</span>
+      </div>
+      <div class="jc-amounts">
+        <div class="net ${j.grossProfit>0?'pos':'zero'}">${fmt(j.grossProfit)}</div>
+        <div class="lbl">Gross Profit</div>
+      </div>
+    </div>`).join("") || `<div style="text-align:center;padding:40px;color:var(--text-faint);">No job cards match this filter.</div>`;
+}
+["jobSearch","jobCategoryFilter","jobEmployeeFilter","jobStatusFilter"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderJobList);
+  document.getElementById(id).addEventListener("change", renderJobList);
+});
+
+/* ============ EMPLOYEES VIEW ============ */
+function renderEmployees(){
+  const p = PERIODS[currentPeriod];
+  document.getElementById("empSub").textContent = p.hasJobs
+    ? `Computed live from the ${JOBS.length} ${p.label.split(" ")[0]} job cards — Gross Profit = Revenue − Job Expenses.`
+    : "Reproduced from the workbook's Performance Dashboard sheet (Employee Performance table) for June 2026.";
+  const rows = getEmployeeRows();
+  const maxRev = Math.max(...rows.map(r=>r.revenue), 1);
+  document.getElementById("empGrid").innerHTML = rows.map(r=>`
+    <div class="emp-card">
+      <div class="emp-head">
+        <div class="emp-avatar">${initials(r.name)}</div>
+        <div><div class="emp-name">${r.name}</div><div class="emp-role">${r.jobs} job card${r.jobs!==1?'s':''} in ${p.label}</div></div>
+      </div>
+      <div class="emp-stats">
+        <div class="emp-stat"><div class="v">${fmt(r.revenue)}</div><div class="l">Revenue</div></div>
+        <div class="emp-stat"><div class="v">${fmt(r.expenses)}</div><div class="l">Expenses</div></div>
+        <div class="emp-stat"><div class="v">${fmt(r.grossProfit)}</div><div class="l">Gross Profit</div></div>
+        <div class="emp-stat"><div class="v">${fmt(r.jobs? r.grossProfit/r.jobs : 0)}</div><div class="l">Profit / Job</div></div>
+      </div>
+      <div class="emp-bar-track"><div class="emp-bar-fill" style="width:${(r.revenue/maxRev*100).toFixed(0)}%"></div></div>
+    </div>`).join("");
+}
+
+/* ============ DEPARTMENTS VIEW ============ */
+function renderDepartments(){
+  const p = PERIODS[currentPeriod];
+  document.getElementById("deptSub").textContent = p.hasJobs
+    ? "Categories auto-assigned from each job's service description."
+    : "Reproduced from the workbook's Performance Dashboard sheet (Work Type / Department Performance table) for June 2026.";
+  const rows = getDeptRows();
+  document.getElementById("deptTableBody").innerHTML = rows.map((r,i)=>`
+    <tr><td class="strong"><span class="rank">${i+1}</span>${r.name}</td><td>${r.jobs}</td><td>${fmt(r.revenue)}</td><td>${fmt(r.expenses)}</td>
+    <td class="strong" style="color:${r.grossProfit>=0?'var(--green)':'var(--red)'}">${fmt(r.grossProfit)}</td><td>${(r.margin*100).toFixed(1)}%</td></tr>`).join("");
+  renderDeptExpenseChart("chartDeptExpense2");
+}
+
+/* ============ INVENTORY VIEW (period-independent) ============ */
+function populateInvFilters(){
+  const cats = [...new Set(INVENTORY.map(i=>i.category))].sort();
+  document.getElementById("invCategoryFilter").innerHTML = `<option value="">All categories</option>` + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
+}
+function renderInventory(){
+  const q = (document.getElementById("invSearch").value||"").toLowerCase();
+  const cat = document.getElementById("invCategoryFilter").value;
+  const filtered = INVENTORY.filter(i=>{
+    if(cat && i.category!==cat) return false;
+    if(q && !(`${i.name} ${i.code}`.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const total = INVENTORY.reduce((s,i)=>s+i.stockValue,0);
+  document.getElementById("invTotalPill").textContent = "Total stock value " + fmt(total);
+  const OPENING_DATE = new Date("2026-01-01");
+  const daysSince = d => Math.max(0, Math.floor((Date.now() - d.getTime())/86400000));
+  document.getElementById("invTableBody").innerHTML = filtered.map(i=>{
+    const dOpen = i.opening > 0 ? daysSince(OPENING_DATE) + " d" : "—";
+    const dNew  = i.newDate ? daysSince(new Date(i.newDate)) + " d" : "—";
+    const newQty = i.newQty ? `<span style="color:var(--green);font-weight:600;">+${i.newQty}</span>` : "—";
+    const soldQty = i.soldQty ? `<span style="color:var(--red);font-weight:600;">-${i.soldQty}</span>` : "—";
+    return `<tr><td class="strong">${i.name}</td><td>${i.category}</td><td>${i.code||"—"}</td>
+    <td>${i.opening}</td><td>${newQty}</td><td>${soldQty}</td><td class="strong">${i.qty} ${i.unit}</td>
+    <td>${fmt(i.cost)}</td><td>${fmt(i.sellingPrice)}</td><td class="strong">${fmt(i.stockValue)}</td>
+    <td>${dOpen}</td><td>${dNew}</td></tr>`;}).join("")
+    || `<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:24px;">No items match this filter.</td></tr>`;
+}
+["invSearch","invCategoryFilter"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", renderInventory);
+  document.getElementById(id).addEventListener("change", renderInventory);
+});
+
+/* ============ PURCHASE VIEW (period-independent) ============ */
+function fmtDate(s){ if(!s) return "\u2014"; const d = new Date(s); return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}); }
+function renderPurchase(){
+  const total = PURCHASES.reduce((s,p)=>s+p.value,0);
+  const totalQty = PURCHASES.reduce((s,p)=>s+p.qty,0);
+  document.getElementById("purTotalPill").textContent = totalQty + " units \u00b7 Total order value " + fmt(total);
+  document.getElementById("purTableBody").innerHTML = PURCHASES.map(p=>{
+    const daysToEta = Math.ceil((new Date(p.eta).getTime() - Date.now())/86400000);
+    const etaBadge = daysToEta >= 0
+      ? `<span style="color:var(--blue);font-weight:600;">${daysToEta} d</span>`
+      : `<span style="color:var(--orange);font-weight:600;">due</span>`;
+    return `<tr><td>${p.sl}</td><td class="strong">${p.product}</td><td>${p.spec}</td><td>${p.qty} Nos</td>
+    <td>${fmt(p.unitCost)}</td><td class="strong">${fmt(p.value)}</td>
+    <td>${fmtDate(p.shipDate)}</td><td>${fmtDate(p.eta)}</td><td>${etaBadge}</td>
+    <td>${p.supplier}</td><td><span class="status-badge s-sent">${p.status}</span></td></tr>`;}).join("");
+  const ctx = document.getElementById("chartPurValue");
+  if(ctx && !ctx._chart){
+    ctx._chart = new Chart(ctx, {type:"bar",
+      data:{labels:PURCHASES.map(p=>p.spec), datasets:[{label:"Product Value (QAR)", data:PURCHASES.map(p=>p.value), backgroundColor:"#F7941D", borderRadius:6}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{x:{ticks:{color:"#8A93A1"},grid:{color:"#272D35"}}, y:{ticks:{color:"#8A93A1"},grid:{color:"#272D35"}}}}});
+  }
+}
+renderPurchase();
+
+/* ============ ATTENDANCE VIEW (only has June data) ============ */
+function renderAttendance(){
+  const p = PERIODS[currentPeriod];
+  const wrap = document.getElementById("attContentWrap");
+  if(!p.hasAttendance){
+    document.getElementById("attSub").textContent = "No attendance punches were recorded for "+p.label+" in this workbook.";
+    wrap.innerHTML = emptyPanel("No attendance data for "+p.label, "The Attendance Sheet in this workbook only covers June 2026 (173 punch records). Switch the Period dropdown to June 2026 to view it.");
+    return;
+  }
+  document.getElementById("attSub").textContent = "173 daily punch-in/punch-out records across June 2026, aggregated per employee per day.";
+  wrap.innerHTML = `
+    <div class="panel">
+      <h3>Total Hours by Employee <span class="muted">June 2026</span></h3>
+      <div class="chart-wrap tall"><canvas id="chartAttHours"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Employee</th><th>Days Present</th><th>Total Hours</th><th>Avg Hrs/Day</th></tr></thead>
+        <tbody id="attTableBody"></tbody>
+      </table>
+      </div>
+    </div>`;
+  const byEmp = {};
+  ATTENDANCE.forEach(a=>{
+    if(!byEmp[a.employee]) byEmp[a.employee] = {days:0, hours:0};
+    byEmp[a.employee].days++; byEmp[a.employee].hours+=a.hours;
+  });
+  const rows = Object.entries(byEmp).map(([name,v])=>({name,...v,avg: v.days? v.hours/v.days : 0})).sort((a,b)=>b.hours-a.hours);
+  document.getElementById("attTableBody").innerHTML = rows.map(r=>`
+    <tr><td class="strong">${r.name}</td><td>${r.days}</td><td>${r.hours.toFixed(1)} hrs</td><td>${r.avg.toFixed(1)} hrs</td></tr>`).join("");
+  renderAttHoursChart();
+}
+
+/* ============ JUNE-ONLY INSIGHTS PANEL ON OVERVIEW ============ */
+function renderJuneInsights(){
+  const panel = document.getElementById("juneInsightsPanel");
+  if(currentPeriod==="2026-06"){
+    panel.style.display = "";
+    document.getElementById("juneInsights").innerHTML = JUNE.insights.map(i=>`<li>${i.replace(/^•\s*/,"")}</li>`).join("");
+  } else {
+    panel.style.display = "none";
+  }
+}
+
+/* ============ MASTER RENDER ============ */
+function renderAll(){
+  const p = PERIODS[currentPeriod];
+  document.getElementById("periodMeta").textContent = p.meta;
+  document.getElementById("overviewSub").textContent = "Workshop performance for " + p.label + ".";
+
+  renderStatCards();
+  renderOverheadList();
+  renderTrendOrMixCharts();
+  renderEmpRevenueChart();
+  renderDeptExpenseChart("chartDeptExpense");
+  renderJuneInsights();
+
+  renderJobsView();
+  renderEmployees();
+  renderDepartments();
+  renderAttendance();
+}
+
+/* ============ INIT (period-independent, one-time) ============ */
+function init(){
+  syncPeriodData();
+  populateJobFilters();
+  populateInvFilters();
+  renderInvCatChart();
+  renderInventory();
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
