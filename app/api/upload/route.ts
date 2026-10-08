@@ -75,14 +75,42 @@ export async function POST(req: Request) {
 
     if (supabase) {
       // ── Supabase path ──────────────────────────────────────────────────────────
-      const upload = await supabase.storage.from('report-files').upload(storagePath, bytes, {
-        contentType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      const bucketName = 'report-files';
+      const contentType = file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      let upload = await supabase.storage.from(bucketName).upload(storagePath, bytes, {
+        contentType,
         upsert: false
       });
+
+      // Auto-create bucket if missing and retry upload
+      if (upload.error && (upload.error.message.includes('Bucket not found') || upload.error.message.toLowerCase().includes('not found'))) {
+        console.log(`Bucket "${bucketName}" not found. Creating bucket automatically...`);
+        const { error: createErr } = await supabase.storage.createBucket(bucketName, {
+          public: false,
+          allowedMimeTypes: [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+            'application/octet-stream'
+          ]
+        });
+
+        if (!createErr || createErr.message.includes('already exists')) {
+          upload = await supabase.storage.from(bucketName).upload(storagePath, bytes, {
+            contentType,
+            upsert: false
+          });
+        }
+      }
+
       if (upload.error) {
         console.error('Supabase storage upload error:', upload.error);
-        return NextResponse.json({ error: `Storage upload failed: ${upload.error.message}` }, { status: 500 });
+        return NextResponse.json(
+          { error: `Storage upload failed: ${upload.error.message}. Please ensure the "${bucketName}" bucket exists in Supabase Storage.` },
+          { status: 500 }
+        );
       }
+
       const insert = await supabase.from('report_versions').insert({
         report_code: code,
         file_name: file.name,
@@ -94,8 +122,11 @@ export async function POST(req: Request) {
 
       if (insert.error) {
         console.error('Supabase db insert error:', insert.error);
-        await supabase.storage.from('report-files').remove([storagePath]);
-        return NextResponse.json({ error: `Database version save failed: ${insert.error.message}` }, { status: 500 });
+        await supabase.storage.from(bucketName).remove([storagePath]);
+        return NextResponse.json(
+          { error: `Database version save failed: ${insert.error.message}. Make sure to run supabase.sql to create the report_versions table.` },
+          { status: 500 }
+        );
       }
 
       await supabase
